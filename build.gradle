@@ -46,7 +46,8 @@ dependencies {
     jei()
     top()
     lostcities()
+    mcjtylib()
 }
 
-cfdeps(['the-one-probe'], ['the-lost-cities'], [])
-modrinth(['the-one-probe'], ['the-lost-cities'], [])
+cfdeps(['the-one-probe'], ['mcjtylib', 'the-lost-cities'], [])
+modrinth(['the-one-probe'], ['mcjtylib', 'the-lost-cities'], [])
