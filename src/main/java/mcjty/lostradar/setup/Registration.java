@@ -1,7 +1,9 @@
 package mcjty.lostradar.setup;
 
+import mcjty.lib.setup.DeferredItem;
 import mcjty.lib.setup.DeferredItems;
 import mcjty.lostradar.LostRadar;
+import mcjty.lostradar.radar.RadarItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -15,6 +17,7 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
 import static mcjty.lostradar.LostRadar.MODID;
+import static mcjty.lostradar.LostRadar.tab;
 
 public class Registration {
 
@@ -29,6 +32,8 @@ public class Registration {
                 LostRadar.setup.populateTab(output);
             })
             .build());
+
+    public static final DeferredItem<RadarItem> TELEPORT_PROBE = ITEMS.register("teleport_probe", tab(RadarItem::new));
 
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
