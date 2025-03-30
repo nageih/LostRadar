@@ -33,7 +33,7 @@ public class Registration {
             })
             .build());
 
-    public static final DeferredItem<RadarItem> TELEPORT_PROBE = ITEMS.register("teleport_probe", tab(RadarItem::new));
+    public static final DeferredItem<RadarItem> TELEPORT_PROBE = ITEMS.register("radar", tab(RadarItem::new));
 
     public static void register(IEventBus bus) {
         ITEMS.register(bus);

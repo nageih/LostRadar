@@ -15,7 +15,7 @@ import static mcjty.lib.gui.widgets.Widgets.vertical;
 public class GuiRadar extends GuiItemScreen {
 
     private static final int xSize = 340;
-    private static final int ySize = 136;
+    private static final int ySize = 220;
 
     public GuiRadar() {
         super(xSize, ySize, ManualEntry.EMPTY);
