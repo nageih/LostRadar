@@ -10,6 +10,7 @@ public class ModSetup extends DefaultModSetup {
 
     public void init(FMLCommonSetupEvent e) {
         MinecraftForge.EVENT_BUS.register(new ForgeEventHandlers());
+        Messages.registerMessages();
     }
 
     @Override

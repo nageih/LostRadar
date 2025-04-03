@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "i": {
+      "tag": "forge:ingots/iron"
+    },
+    "l": {
+      "tag": "forge:glass_panes"
+    },
+    "x": {
+      "item": "minecraft:ender_pearl"
+    }
+  },
+  "pattern": [
+    "lll",
+    "ixi",
+    "iii"
+  ],
+  "result": {
+    "item": "lostradar:radar"
+  }
+}

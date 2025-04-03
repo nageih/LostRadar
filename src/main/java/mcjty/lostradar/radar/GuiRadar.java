@@ -4,6 +4,7 @@ import mcjty.lib.gui.GuiItemScreen;
 import mcjty.lib.gui.ManualEntry;
 import mcjty.lib.gui.Window;
 import mcjty.lib.gui.widgets.Panel;
+import mcjty.lostradar.setup.Messages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -31,10 +32,10 @@ public class GuiRadar extends GuiItemScreen {
         Panel toplevel = vertical(DEFAULT_VERTICAL_MARGIN, 0).filledRectThickness(2);
 
         // setup
-
         toplevel.bounds(k, l, xSize, ySize);
 
         window = new Window(this, toplevel);
+        Messages.sendToServer(new PacketRequestMap(Minecraft.getInstance().player.blockPosition()));
     }
 
     @Override

@@ -4,17 +4,20 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LostRadarData extends SavedData {
 
     public static final String NAME = "LostRadarData";
 
-//    private final Map<ChunkCoord, LostChunkData> lostChunkDataMap = new HashMap<>();
+    public static Map<ChunkPos, ClientData> chunkPosMap = new HashMap<>();
 
     @Nonnull
     public static LostRadarData getData(Level world) {
