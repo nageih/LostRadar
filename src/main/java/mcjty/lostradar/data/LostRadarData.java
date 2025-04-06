@@ -17,7 +17,7 @@ public class LostRadarData extends SavedData {
 
     public static final String NAME = "LostRadarData";
 
-    public static Map<ChunkPos, ClientData> chunkPosMap = new HashMap<>();
+//    public static Map<ChunkPos, ClientData> chunkPosMap = new HashMap<>();
 
     @Nonnull
     public static LostRadarData getData(Level world) {
