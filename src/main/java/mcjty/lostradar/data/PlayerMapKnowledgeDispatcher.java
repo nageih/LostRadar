@@ -12,17 +12,17 @@ import net.minecraftforge.common.util.LazyOptional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class PlayerMapDataDispatcher implements ICapabilityProvider, INBTSerializable<Tag> {
+public class PlayerMapKnowledgeDispatcher implements ICapabilityProvider, INBTSerializable<Tag> {
 
-    public static LazyOptional<PlayerMapData> getPlayerMapData(Player player) {
+    public static LazyOptional<PlayerMapKnowledge> getPlayerMapData(Player player) {
         return player.getCapability(ModSetup.PLAYER_MAP_DATA);
     }
 
-    private final PlayerMapData data = createProperties();
-    private final LazyOptional<PlayerMapData> propertiesCap = LazyOptional.of(() -> data);
+    private final PlayerMapKnowledge data = createProperties();
+    private final LazyOptional<PlayerMapKnowledge> propertiesCap = LazyOptional.of(() -> data);
 
-    private <T> PlayerMapData createProperties() {
-        return new PlayerMapData();
+    private <T> PlayerMapKnowledge createProperties() {
+        return new PlayerMapKnowledge();
     }
 
     @Nonnull

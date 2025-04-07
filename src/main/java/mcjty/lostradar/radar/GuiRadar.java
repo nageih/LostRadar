@@ -4,6 +4,7 @@ import mcjty.lib.gui.GuiItemScreen;
 import mcjty.lib.gui.ManualEntry;
 import mcjty.lib.gui.Window;
 import mcjty.lib.gui.widgets.Panel;
+import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
 import mcjty.lostradar.setup.Messages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,9 +39,15 @@ public class GuiRadar extends GuiItemScreen {
         Messages.sendToServer(new PacketRequestMap(Minecraft.getInstance().player.blockPosition()));
     }
 
+    private void renderMap() {
+        PlayerMapKnowledgeDispatcher.getPlayerMapData(Minecraft.getInstance().player).ifPresent(data -> {
+        });
+    }
+
     @Override
     protected void renderInternal(@Nonnull GuiGraphics graphics, int xSize_lo, int ySize_lo, float par3) {
         drawWindow(graphics);
+        renderMap();
     }
 
     public static void open() {

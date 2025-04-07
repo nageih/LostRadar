@@ -1,26 +1,37 @@
 package mcjty.lostradar.data;
 
 import com.mojang.serialization.DataResult;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 
 import java.util.HashMap;
 
-public class PlayerMapData {
+public class PlayerMapKnowledge {
 
     private MapPalette palette = new MapPalette(new HashMap<>());
+
     private boolean dirty = true;
 
-    public PlayerMapData() {
+    public PlayerMapKnowledge() {
+    }
+
+    public MapPalette getPalette() {
+        return palette;
     }
 
     public void tick(ServerPlayer player) {
-        if (dirty) {
-            syncToClient(player);
-        }
+//        if (dirty) {
+//            syncToClient(player);
+//        }
+    }
+
+    public ResourceLocation clientGetCategoryAt(ResourceKey<Level> level, int chunkX, int chunkZ) {
+
     }
 
     private void syncToClient(ServerPlayer player) {
@@ -43,10 +54,10 @@ public class PlayerMapData {
     }
 
     public static void register(RegisterCapabilitiesEvent event) {
-        event.register(PlayerMapData.class);
+        event.register(PlayerMapKnowledge.class);
     }
 
-    public void copyFrom(PlayerMapData oldStore) {
+    public void copyFrom(PlayerMapKnowledge oldStore) {
         this.palette = oldStore.palette;
         this.dirty = true;
     }

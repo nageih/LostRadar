@@ -1,8 +1,8 @@
 package mcjty.lostradar;
 
 import mcjty.lostradar.commands.ModCommands;
-import mcjty.lostradar.data.PlayerMapData;
-import mcjty.lostradar.data.PlayerMapDataDispatcher;
+import mcjty.lostradar.data.PlayerMapKnowledge;
+import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
 import mcjty.lostradar.setup.ModSetup;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -23,13 +23,13 @@ public class EventHandlers {
 
     @SubscribeEvent
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        PlayerMapData.register(event);
+        PlayerMapKnowledge.register(event);
     }
 
     @SubscribeEvent
     public void onPlayerTickEvent(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.START && !event.player.getCommandSenderWorld().isClientSide) {
-            PlayerMapDataDispatcher.getPlayerMapData(event.player).ifPresent(handler -> handler.tick((ServerPlayer) event.player));
+            PlayerMapKnowledgeDispatcher.getPlayerMapData(event.player).ifPresent(handler -> handler.tick((ServerPlayer) event.player));
         }
     }
 
@@ -37,7 +37,7 @@ public class EventHandlers {
     public void onEntityConstructing(AttachCapabilitiesEvent<Entity> event){
         if (event.getObject() instanceof Player) {
             if (!event.getCapabilities().containsKey(ModSetup.PLAYER_MAP_DATA) && !event.getObject().getCapability(ModSetup.PLAYER_MAP_DATA).isPresent()) {
-                event.addCapability(ModSetup.PLAYER_MAP_DATA_KEY, new PlayerMapDataDispatcher());
+                event.addCapability(ModSetup.PLAYER_MAP_DATA_KEY, new PlayerMapKnowledgeDispatcher());
             } else {
                 throw new IllegalStateException(event.getObject().toString());
             }

@@ -3,7 +3,7 @@ package mcjty.lostradar.setup;
 import mcjty.lib.setup.DefaultModSetup;
 import mcjty.lostradar.EventHandlers;
 import mcjty.lostradar.compat.LostCitiesCompat;
-import mcjty.lostradar.data.PlayerMapData;
+import mcjty.lostradar.data.PlayerMapKnowledge;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
@@ -15,8 +15,8 @@ import static mcjty.lostradar.LostRadar.MODID;
 
 public class ModSetup extends DefaultModSetup {
 
-    public static final ResourceLocation PLAYER_MAP_DATA_KEY = new ResourceLocation(MODID, "playermapdata");
-    public static Capability<PlayerMapData> PLAYER_MAP_DATA = CapabilityManager.get(new CapabilityToken<>(){});
+    public static final ResourceLocation PLAYER_MAP_DATA_KEY = new ResourceLocation(MODID, "playermapknowledge");
+    public static Capability<PlayerMapKnowledge> PLAYER_MAP_DATA = CapabilityManager.get(new CapabilityToken<>(){});
 
 
     public void init(FMLCommonSetupEvent e) {
