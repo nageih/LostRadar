@@ -4,6 +4,7 @@ import mcjty.lib.setup.DefaultModSetup;
 import mcjty.lostradar.EventHandlers;
 import mcjty.lostradar.compat.LostCitiesCompat;
 import mcjty.lostradar.data.PlayerMapKnowledge;
+import mcjty.lostradar.network.Messages;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;

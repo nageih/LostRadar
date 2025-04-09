@@ -1,13 +1,14 @@
-package mcjty.lostradar.setup;
+package mcjty.lostradar.network;
 
 import mcjty.lib.network.IPayloadRegistrar;
 import mcjty.lib.network.Networking;
 import mcjty.lostradar.LostRadar;
-import mcjty.lostradar.radar.PacketRequestMap;
-import mcjty.lostradar.radar.PacketReturnMapToClient;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.PacketDistributor;
 
 public class Messages {
 
@@ -18,8 +19,8 @@ public class Messages {
                 .versioned("1.0")
                 .optional();
 
-        registrar.play(PacketRequestMap.class, PacketRequestMap::create, handler -> handler.client(PacketRequestMap::handle));
-        registrar.play(PacketReturnMapToClient.class, PacketReturnMapToClient::create, handler -> handler.server(PacketReturnMapToClient::handle));
+        registrar.play(PacketRequestMapChunk.class, PacketRequestMapChunk::create, handler -> handler.client(PacketRequestMapChunk::handle));
+        registrar.play(PacketReturnMapChunkToClient.class, PacketReturnMapChunkToClient::create, handler -> handler.server(PacketReturnMapChunkToClient::handle));
     }
 
     public static <T> void sendToPlayer(T packet, Player player) {
@@ -28,5 +29,9 @@ public class Messages {
 
     public static <T> void sendToServer(T packet) {
         registrar.getChannel().sendToServer(packet);
+    }
+
+    public static <T> void sendToAllPlayers(ResourceKey<Level> level, T packet) {
+        registrar.getChannel().send(PacketDistributor.DIMENSION.with(() -> level), packet);
     }
 }

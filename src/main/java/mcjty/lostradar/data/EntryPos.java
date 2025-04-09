@@ -6,6 +6,7 @@ import mcjty.lib.varia.codec.StreamCodec;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 // A position of a MapChunk (16x16 array of chunks). Coordinate represents the top-left chunk
@@ -29,5 +30,12 @@ public record EntryPos(ResourceKey<Level> level, int chunkX, int chunkZ) {
                 int chunkZ = buf.readInt();
                 return new EntryPos(level, chunkX, chunkZ);
             });
+
+    // Convert a chunk position to an EntryPos by calculating the top-left chunk of the 16x16 area that this chunk pos is in.
+    public static EntryPos fromChunkPos(ResourceKey<Level> level, ChunkPos pos) {
+        int topLeftX = pos.x - (pos.x % 16);
+        int topLeftZ = pos.z - (pos.z % 16);
+        return new EntryPos(level, topLeftX, topLeftZ);
+    }
 }
 

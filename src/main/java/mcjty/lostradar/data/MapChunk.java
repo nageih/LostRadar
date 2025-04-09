@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lib.varia.codec.StandardCodecs;
 import mcjty.lib.varia.codec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.ChunkPos;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,5 +42,16 @@ public record MapChunk(int chunkX, int chunkZ, short[] data) {
             boxed[i] = shorts[i];
         }
         return Arrays.asList(boxed);
+    }
+
+    // Get the data at the given chunk position. This will return -1 if the chunk position is out of bounds for this map chunk
+    public int getDataAt(ChunkPos pos) {
+        int x = pos.x - chunkX;
+        int z = pos.z - chunkZ;
+        if (x < 0 || x >= 16 || z < 0 || z >= 16) {
+            return -1;
+        }
+        int index = x + z * 16;
+        return data[index];
     }
 }
