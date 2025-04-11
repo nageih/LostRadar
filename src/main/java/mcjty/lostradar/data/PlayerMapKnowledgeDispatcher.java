@@ -14,8 +14,8 @@ import javax.annotation.Nullable;
 
 public class PlayerMapKnowledgeDispatcher implements ICapabilityProvider, INBTSerializable<Tag> {
 
-    public static LazyOptional<PlayerMapKnowledge> getPlayerMapData(Player player) {
-        return player.getCapability(ModSetup.PLAYER_MAP_DATA);
+    public static LazyOptional<PlayerMapKnowledge> getPlayerMapKnowledge(Player player) {
+        return player.getCapability(ModSetup.PLAYER_KNOWLEDGE);
     }
 
     private final PlayerMapKnowledge data = createProperties();
@@ -28,7 +28,7 @@ public class PlayerMapKnowledgeDispatcher implements ICapabilityProvider, INBTSe
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
-        if (cap == ModSetup.PLAYER_MAP_DATA) {
+        if (cap == ModSetup.PLAYER_KNOWLEDGE) {
             return propertiesCap.cast();
         }
         return LazyOptional.empty();

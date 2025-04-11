@@ -1,6 +1,7 @@
 package mcjty.lostradar;
 
 import mcjty.lostradar.commands.ModCommands;
+import mcjty.lostradar.data.PaletteCache;
 import mcjty.lostradar.data.PlayerMapKnowledge;
 import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
 import mcjty.lostradar.setup.ModSetup;
@@ -12,6 +13,7 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class EventHandlers {
@@ -26,18 +28,23 @@ public class EventHandlers {
         PlayerMapKnowledge.register(event);
     }
 
+    private int tickCounter = 10;
     @SubscribeEvent
     public void onPlayerTickEvent(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.START && !event.player.getCommandSenderWorld().isClientSide) {
-            PlayerMapKnowledgeDispatcher.getPlayerMapData(event.player).ifPresent(handler -> handler.tick((ServerPlayer) event.player));
+            tickCounter--;
+            if (tickCounter > 0) {
+                return;
+            }
+            PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(event.player).ifPresent(handler -> handler.tick((ServerPlayer) event.player));
         }
     }
 
     @SubscribeEvent
     public void onEntityConstructing(AttachCapabilitiesEvent<Entity> event){
         if (event.getObject() instanceof Player) {
-            if (!event.getCapabilities().containsKey(ModSetup.PLAYER_MAP_DATA) && !event.getObject().getCapability(ModSetup.PLAYER_MAP_DATA).isPresent()) {
-                event.addCapability(ModSetup.PLAYER_MAP_DATA_KEY, new PlayerMapKnowledgeDispatcher());
+            if (!event.getCapabilities().containsKey(ModSetup.PLAYER_KNOWLEDGE) && !event.getObject().getCapability(ModSetup.PLAYER_KNOWLEDGE).isPresent()) {
+                event.addCapability(ModSetup.PLAYER_KNOWLEDGE_KEY, new PlayerMapKnowledgeDispatcher());
             } else {
                 throw new IllegalStateException(event.getObject().toString());
             }
@@ -48,11 +55,16 @@ public class EventHandlers {
     public void onPlayerCloned(PlayerEvent.Clone event) {
         if (event.isWasDeath()) {
             // We need to copyFrom the capabilities
-            event.getOriginal().getCapability(ModSetup.PLAYER_MAP_DATA).ifPresent(oldStore -> {
-                event.getEntity().getCapability(ModSetup.PLAYER_MAP_DATA).ifPresent(newStore -> {
+            event.getOriginal().getCapability(ModSetup.PLAYER_KNOWLEDGE).ifPresent(oldStore -> {
+                event.getEntity().getCapability(ModSetup.PLAYER_KNOWLEDGE).ifPresent(newStore -> {
                     newStore.copyFrom(oldStore);
                 });
             });
         }
+    }
+
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        PaletteCache.cleanup();
     }
 }

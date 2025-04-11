@@ -16,8 +16,8 @@ import static mcjty.lostradar.LostRadar.MODID;
 
 public class ModSetup extends DefaultModSetup {
 
-    public static final ResourceLocation PLAYER_MAP_DATA_KEY = new ResourceLocation(MODID, "playermapknowledge");
-    public static Capability<PlayerMapKnowledge> PLAYER_MAP_DATA = CapabilityManager.get(new CapabilityToken<>(){});
+    public static final ResourceLocation PLAYER_KNOWLEDGE_KEY = new ResourceLocation(MODID, "playermapknowledge");
+    public static Capability<PlayerMapKnowledge> PLAYER_KNOWLEDGE = CapabilityManager.get(new CapabilityToken<>(){});
 
 
     public void init(FMLCommonSetupEvent e) {

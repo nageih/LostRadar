@@ -1,0 +1,19 @@
+[
+  {
+    "name": "buildings",
+    "color": 16711680,
+    "translatableKey": "lostradar.buildings",
+    "buildings": [
+      "lostcities:building1",
+      "lostcities:building2",
+      "lostcities:building3"
+    ]
+  },
+  {
+    "name": "default",
+    "color": 13421772,
+    "translatableKey": "lostradar.default",
+    "buildings": [
+    ]
+  }
+]

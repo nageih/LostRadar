@@ -3,6 +3,9 @@ package mcjty.lostradar.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import mcjty.lostcities.api.ILostChunkInfo;
+import mcjty.lostcities.api.ILostCityInformation;
+import mcjty.lostradar.compat.LostCitiesCompat;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
@@ -18,22 +21,17 @@ import java.util.Set;
 
 public class PlayerMapKnowledge {
 
-    private final Set<ResourceLocation> knownCategories = new HashSet<>();
+    private final Set<String> knownCategories = new HashSet<>();
 
-    private static final Codec<Set<ResourceLocation>> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.list(ResourceLocation.CODEC).fieldOf("categories").forGetter(resourceLocations -> new ArrayList<>(resourceLocations))
-    ).apply(instance, resourceLocations -> new HashSet<>(resourceLocations)));
+    private static final Codec<Set<String>> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.list(Codec.STRING).fieldOf("categories").forGetter(s -> new ArrayList<>(s))
+    ).apply(instance, HashSet::new));
 
     public PlayerMapKnowledge() {
     }
 
-    public Set<ResourceLocation> getKnownCategories() {
+    public Set<String> getKnownCategories() {
         return knownCategories;
-    }
-
-    public ResourceLocation clientGetCategoryAt(Level level, ChunkPos pos) {
-        ClientMapData data = ClientMapData.getData();
-        return data.getCategory(level.dimension(), pos);
     }
 
     public Tag saveNBTData() {
@@ -59,5 +57,24 @@ public class PlayerMapKnowledge {
 
     public static void register(RegisterCapabilitiesEvent event) {
         event.register(PlayerMapKnowledge.class);
+    }
+
+    public void tick(ServerPlayer player) {
+        ILostCityInformation lostInfo = LostCitiesCompat.lostCities.getLostInfo(player.level());
+        if (lostInfo != null) {
+            ChunkPos pos = player.chunkPosition();
+            ResourceKey<Level> dimension = player.level().dimension();
+            ILostChunkInfo chunkInfo = lostInfo.getChunkInfo(pos.x, pos.z);
+            if (chunkInfo != null) {
+                PaletteCache cache = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(player.level()));
+                ResourceLocation buildingId = chunkInfo.getBuildingId();
+                if (buildingId != null) {
+                    MapPalette.PaletteEntry entry = cache.getEntryForBuilding(buildingId);
+                    if (entry != null) {
+                        knownCategories.add(entry.name());
+                    }
+                }
+            }
+        }
     }
 }

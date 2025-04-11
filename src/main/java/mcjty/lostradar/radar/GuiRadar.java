@@ -1,14 +1,16 @@
 package mcjty.lostradar.radar;
 
+import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.GuiItemScreen;
 import mcjty.lib.gui.ManualEntry;
 import mcjty.lib.gui.Window;
 import mcjty.lib.gui.widgets.Panel;
-import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.data.*;
 import mcjty.lostradar.network.PacketRequestMapChunk;
 import mcjty.lostradar.network.Messages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.level.ChunkPos;
 
 import javax.annotation.Nonnull;
 
@@ -37,18 +39,32 @@ public class GuiRadar extends GuiItemScreen {
         toplevel.bounds(k, l, xSize, ySize);
 
         window = new Window(this, toplevel);
-        Messages.sendToServer(new PacketRequestMapChunk(Minecraft.getInstance().player.blockPosition()));
     }
 
-    private void renderMap() {
-        PlayerMapKnowledgeDispatcher.getPlayerMapData(Minecraft.getInstance().player).ifPresent(data -> {
-        });
+    private void renderMap(GuiGraphics graphics) {
+//        PlayerMapKnowledgeDispatcher.getPlayerMapData(Minecraft.getInstance().player).ifPresent(data -> {
+//        });
+        ClientMapData data = ClientMapData.getData();
+        ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
+        // For an area of 10x10 chunks around the player we render the color
+        int size = 10;
+        for (int x = -10; x <= 10; x++) {
+            for (int z = -10; z <= 10; z++) {
+                ChunkPos pos = new ChunkPos(p.x + x, p.z + z);
+                MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
+                if (entry != null) {
+                    // Render the color
+                    int color = entry.color();
+                    RenderHelper.drawBeveledBox(graphics, pos.x * size, pos.z * size, (pos.x + 1) * size, (pos.z + 1) * size, color, color, color);
+                }
+            }
+        }
     }
 
     @Override
     protected void renderInternal(@Nonnull GuiGraphics graphics, int xSize_lo, int ySize_lo, float par3) {
         drawWindow(graphics);
-        renderMap();
+        renderMap(graphics);
     }
 
     public static void open() {
