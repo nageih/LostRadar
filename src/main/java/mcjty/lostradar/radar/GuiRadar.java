@@ -46,7 +46,7 @@ public class GuiRadar extends GuiItemScreen {
 //        });
         ClientMapData data = ClientMapData.getData();
         ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
-        // For an area of 10x10 chunks around the player we render the color
+        // For an area of 21x21 chunks around the player we render the color
         int size = 10;
         for (int x = -10; x <= 10; x++) {
             for (int z = -10; z <= 10; z++) {

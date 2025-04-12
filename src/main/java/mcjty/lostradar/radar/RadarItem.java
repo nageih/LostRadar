@@ -19,7 +19,9 @@ public class RadarItem extends Item {
     @Override
     @Nonnull
     public InteractionResultHolder<ItemStack> use(@Nonnull Level world, @Nonnull Player player, @Nonnull InteractionHand hand) {
-        GuiRadar.open();
+        if (world.isClientSide) {
+            GuiRadar.open();
+        }
         return super.use(world, player, hand);
     }
 
