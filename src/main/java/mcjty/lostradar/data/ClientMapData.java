@@ -28,10 +28,24 @@ public class ClientMapData {
     private ClientMapData() {
     }
 
+    public void cleanup() {
+        mapChunks.clear();
+        requestedChunks.clear();
+    }
+
     public void addChunk(ResourceKey<Level> level, MapChunk chunk) {
         EntryPos entryPos = new EntryPos(level, chunk.chunkX(), chunk.chunkZ());
         requestedChunks.remove(entryPos);
         mapChunks.put(entryPos, chunk);
+    }
+
+    public int getBiomeColor(Level level, ChunkPos pos) {
+        EntryPos entryPos = EntryPos.fromChunkPos(level.dimension(), pos);
+        MapChunk mapChunk = mapChunks.get(entryPos);
+        if (mapChunk == null) {
+            return -1;
+        }
+        return mapChunk.getBiomeColorAt(pos);
     }
 
     @Nullable
@@ -43,7 +57,8 @@ public class ClientMapData {
                 // Already requested, do nothing
                 return null;
             }
-            Messages.sendToServer(new PacketRequestMapChunk(pos));
+            System.out.println("CLIENT: request " + entryPos);
+            Messages.sendToServer(new PacketRequestMapChunk(entryPos));
             requestedChunks.add(entryPos);
             return null;
         }
@@ -51,8 +66,14 @@ public class ClientMapData {
         if (dataAt < 0) {
             return null;
         }
-        PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
-        return palette.getPalette().palette().get(dataAt);
+        if (dataAt == MapChunk.CITY) {
+            return MapPalette.CITY;
+        } else if (dataAt == MapChunk.HIGHWAY) {
+            return MapPalette.HIGHWAY;
+        } else {
+            PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
+            return palette.getPalette().palette().get(dataAt);
+        }
     }
 
 }

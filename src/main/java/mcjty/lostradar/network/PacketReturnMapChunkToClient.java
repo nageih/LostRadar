@@ -36,6 +36,7 @@ public record PacketReturnMapChunkToClient(ResourceKey<Level> level, MapChunk ch
         ctx.workHandler().submitAsync(() -> {
             ctx.player().ifPresent(player -> {
                 ClientMapData clientMapData = ClientMapData.getData();
+                System.out.println("CLIENT: received for " + chunk.chunkX() + "," + chunk.chunkZ());
                 clientMapData.addChunk(level, chunk);
             });
         });

@@ -20,6 +20,9 @@ public record MapPalette(List<PaletteEntry> palette) {
     public record PaletteEntry(String name, int color, String translatableKey, List<ResourceLocation> buildings) {
     }
 
+    public static final PaletteEntry CITY = new PaletteEntry("city", 0xAAAAAA, "lostradar.city", List.of());
+    public static final PaletteEntry HIGHWAY = new PaletteEntry("highway", 0x000000, "lostradar.highway", List.of());
+
     private static final Codec<PaletteEntry> PALETTE_ENTRY_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("name").forGetter(PaletteEntry::name),
             Codec.INT.fieldOf("color").forGetter(PaletteEntry::color),

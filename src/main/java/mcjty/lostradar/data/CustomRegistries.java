@@ -20,6 +20,6 @@ public class CustomRegistries {
     }
 
     public static void onDataPackRegistry(DataPackRegistryEvent.NewRegistry event) {
-        event.dataPackRegistry(PALETTE_REGISTRY_KEY, MapPalette.CODEC);
+        event.dataPackRegistry(PALETTE_REGISTRY_KEY, MapPalette.CODEC, MapPalette.CODEC);
     }
 }

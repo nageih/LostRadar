@@ -4,27 +4,25 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.api.ILostChunkInfo;
 import mcjty.lostcities.api.ILostCityInformation;
+import mcjty.lostcities.varia.Tools;
 import mcjty.lostradar.compat.LostCitiesCompat;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketReturnMapChunkToClient;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraftforge.common.Tags;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServerMapData extends SavedData {
-
-    public static final String NAME = "LostRadarData";
+public class ServerMapData {
 
     private final Map<EntryPos, MapChunk> mapChunks = new HashMap<>();
 
@@ -45,30 +43,29 @@ public class ServerMapData extends SavedData {
         return map;
     }));
 
+    private static final ServerMapData INSTANCE = new ServerMapData();
+
     @Nonnull
-    public static ServerMapData getData(Level world) {
-        if (world.isClientSide) {
-            throw new RuntimeException("Don't access this client-side!");
-        }
-        DimensionDataStorage storage = ((ServerLevel)world).getDataStorage();
-        return storage.computeIfAbsent(ServerMapData::new, ServerMapData::new, NAME);
+    public static ServerMapData getData() {
+        return INSTANCE;
+    }
+
+    public void cleanup() {
+        mapChunks.clear();
     }
 
     private ServerMapData() {
     }
 
-    private ServerMapData(CompoundTag tag) {
-        load(tag);
-    }
-
-    public void requestMapChunk(Level level, ChunkPos pos) {
+    public void requestMapChunk(Level level, EntryPos pos) {
         if (level.isClientSide) {
             throw new RuntimeException("Don't access this client-side!");
         }
-        EntryPos entryPos = EntryPos.fromChunkPos(level.dimension(), pos);
-        MapChunk mapChunk = mapChunks.get(entryPos);
+        MapChunk mapChunk = mapChunks.get(pos);
+        System.out.println("SERVER: get request for " + pos + " and we got " + mapChunk);
         if (mapChunk == null) {
             mapChunk = calculateMapChunk(level, pos);
+            System.out.println("SERVER: calculated for " + pos + " and we got " + mapChunk);
         }
         if (mapChunk != null) {
             // Send the map chunk to all clients
@@ -77,16 +74,17 @@ public class ServerMapData extends SavedData {
         }
     }
 
-    private MapChunk calculateMapChunk(Level level, ChunkPos pos) {
+    private MapChunk calculateMapChunk(Level level, EntryPos pos) {
         ILostCityInformation info = LostCitiesCompat.lostCities.getLostInfo(level);
         if (info != null) {
             PaletteCache cache = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
             int defaultEntry = cache.getDefaultEntry();
             short[] data = new short[16 * 16];
+            int[] biomeColors = new int[16 * 16];
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     int dataAt = -1;
-                    ILostChunkInfo chunk = info.getChunkInfo(pos.x + x, pos.z + z);
+                    ILostChunkInfo chunk = info.getChunkInfo(pos.chunkX() + x, pos.chunkZ() + z);
                     if (chunk != null) {
                         ResourceLocation buildingId = chunk.getBuildingId();
                         if (buildingId != null) {
@@ -96,31 +94,34 @@ public class ServerMapData extends SavedData {
                             } else {
                                 dataAt = (short) defaultEntry;
                             }
+                        } else if (chunk.getMaxHighwayLevel() != -1) {
+                            dataAt = MapChunk.HIGHWAY;
+                        } else if (chunk.isCity()) {
+                            dataAt = MapChunk.CITY;
                         }
                     }
                     data[x + z * 16] = (short) dataAt;
+                    Holder<Biome> biome = level.getBiome(new BlockPos(((pos.chunkX() + x) << 4) + 8, 65, ((pos.chunkZ() + z) << 4) + 8));
+                    // Biome colors: pastel blue for ocean, green for forests, brown for mountains, yellow for deserts
+                    int biomeColor = 0x00ff00;
+                    if (biome.containsTag(BiomeTags.IS_OCEAN)) {
+                        biomeColor = 0x0000ff;
+                    } else if (biome.containsTag(BiomeTags.IS_MOUNTAIN)) {
+                        biomeColor = 0x8b4513;
+                    } else if (biome.containsTag(Tags.Biomes.IS_DESERT)) {
+                        biomeColor = 0xffff00;
+                    } else if (biome.containsTag(BiomeTags.IS_FOREST)) {
+                        biomeColor = 0x006400;
+                    } else if (biome.containsTag(Tags.Biomes.IS_PLAINS)) {
+                        biomeColor = 0x00ff00;
+                    }
+                    biomeColors[x + z * 16] = biomeColor;
                 }
             }
-            MapChunk mapChunk = new MapChunk(pos.x, pos.z, data);
-            mapChunks.put(EntryPos.fromChunkPos(level.dimension(), pos), mapChunk);
-            setDirty();
+            MapChunk mapChunk = new MapChunk(pos.chunkX(), pos.chunkZ(), data, biomeColors);
+            mapChunks.put(pos, mapChunk);
             return mapChunk;
         }
         return null;
-    }
-
-    private void load(CompoundTag nbt) {
-        MAP_CODEC.decode(NbtOps.INSTANCE, nbt.get("chunks"))
-                .resultOrPartial(error -> {
-                    throw new IllegalStateException("Failed to decode map chunks: " + error);
-                })
-                .ifPresent(chunks -> this.mapChunks.putAll(chunks.getFirst()));
-    }
-
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
-        Tag mapTag = MAP_CODEC.encodeStart(NbtOps.INSTANCE, mapChunks).result().orElseThrow();
-        nbt.put("chunks", mapTag);
-        return nbt;
     }
 }

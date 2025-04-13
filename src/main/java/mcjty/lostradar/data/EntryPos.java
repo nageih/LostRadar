@@ -33,8 +33,8 @@ public record EntryPos(ResourceKey<Level> level, int chunkX, int chunkZ) {
 
     // Convert a chunk position to an EntryPos by calculating the top-left chunk of the 16x16 area that this chunk pos is in.
     public static EntryPos fromChunkPos(ResourceKey<Level> level, ChunkPos pos) {
-        int topLeftX = pos.x - (pos.x % 16);
-        int topLeftZ = pos.z - (pos.z % 16);
+        int topLeftX = pos.x - (pos.x & 0xf);
+        int topLeftZ = pos.z - (pos.z & 0xf);
         return new EntryPos(level, topLeftX, topLeftZ);
     }
 }

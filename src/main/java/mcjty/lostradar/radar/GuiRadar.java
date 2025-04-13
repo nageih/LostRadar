@@ -48,14 +48,24 @@ public class GuiRadar extends GuiItemScreen {
         ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
         // For an area of 21x21 chunks around the player we render the color
         int size = 10;
-        for (int x = -10; x <= 10; x++) {
-            for (int z = -10; z <= 10; z++) {
+        int dim = 10;
+        for (int x = -dim; x <= dim; x++) {
+            for (int z = -dim; z <= dim; z++) {
                 ChunkPos pos = new ChunkPos(p.x + x, p.z + z);
+                int biomeColor = data.getBiomeColor(Minecraft.getInstance().level, pos);
+                if (biomeColor != -1) {
+                    // Render the biome color
+                    RenderHelper.drawBeveledBox(graphics, this.guiLeft + (x+dim) * size, this.guiTop + (z+dim) * size, this.guiLeft + (x + dim + 1) * size, this.guiTop + (z + dim + 1) * size, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
+                }
                 MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
                 if (entry != null) {
                     // Render the color
                     int color = entry.color();
-                    RenderHelper.drawBeveledBox(graphics, pos.x * size, pos.z * size, (pos.x + 1) * size, (pos.z + 1) * size, color, color, color);
+                    if (entry == MapPalette.CITY) {
+                        RenderHelper.drawBeveledBox(graphics, this.guiLeft + (x+dim) * size, this.guiTop + (z+dim) * size, this.guiLeft + (x + dim + 1) * size, this.guiTop + (z + dim + 1) * size, 0xff000000 + color, 0xff000000 + color, 0xff000000 + color);
+                    } else {
+                        RenderHelper.drawBeveledBox(graphics, this.guiLeft + (x + dim) * size, this.guiTop + (z + dim) * size, this.guiLeft + (x + dim + 1) * size, this.guiTop + (z + dim + 1) * size, 0xff333333, 0xff333333, 0xff000000 + color);
+                    }
                 }
             }
         }

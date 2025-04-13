@@ -7,7 +7,45 @@
       "buildings": [
         "lostcities:building1",
         "lostcities:building2",
-        "lostcities:building3"
+        "lostcities:building3",
+        "lostcities:building4",
+        "lostcities:building5",
+        "lostcities:building6",
+        "lostcities:building7",
+        "lostcities:building8"
+      ]
+    },
+    {
+      "name": "center",
+      "color": 255,
+      "translatableKey": "lostradar.center",
+      "buildings": [
+        "lostcities:center00",
+        "lostcities:center01",
+        "lostcities:center10",
+        "lostcities:center11"
+      ]
+    },
+    {
+      "name": "library",
+      "color": 16776960,
+      "translatableKey": "lostradar.library",
+      "buildings": [
+        "lostcities:library00",
+        "lostcities:library01",
+        "lostcities:library10",
+        "lostcities:library11"
+      ]
+    },
+    {
+      "name": "shopping",
+      "color": 16711920,
+      "translatableKey": "lostradar.shopping",
+      "buildings": [
+        "lostcities:shopping00",
+        "lostcities:shopping01",
+        "lostcities:shopping10",
+        "lostcities:shopping11"
       ]
     },
     {
