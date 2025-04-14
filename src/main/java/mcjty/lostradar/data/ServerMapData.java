@@ -101,20 +101,7 @@ public class ServerMapData {
                         }
                     }
                     data[x + z * 16] = (short) dataAt;
-                    Holder<Biome> biome = level.getBiome(new BlockPos(((pos.chunkX() + x) << 4) + 8, 65, ((pos.chunkZ() + z) << 4) + 8));
-                    // Biome colors: pastel blue for ocean, green for forests, brown for mountains, yellow for deserts
-                    int biomeColor = 0x00ff00;
-                    if (biome.containsTag(BiomeTags.IS_OCEAN)) {
-                        biomeColor = 0x0000ff;
-                    } else if (biome.containsTag(BiomeTags.IS_MOUNTAIN)) {
-                        biomeColor = 0x8b4513;
-                    } else if (biome.containsTag(Tags.Biomes.IS_DESERT)) {
-                        biomeColor = 0xffff00;
-                    } else if (biome.containsTag(BiomeTags.IS_FOREST)) {
-                        biomeColor = 0x006400;
-                    } else if (biome.containsTag(Tags.Biomes.IS_PLAINS)) {
-                        biomeColor = 0x00ff00;
-                    }
+                    int biomeColor = getBiomeColor(level, pos, x, 8, z, 8);
                     biomeColors[x + z * 16] = biomeColor;
                 }
             }
@@ -123,5 +110,49 @@ public class ServerMapData {
             return mapChunk;
         }
         return null;
+    }
+
+    // For four points in a chunk we calculate the biome color and then return the color that occurs most
+    private static int getAverageBiomeColor(Level level, EntryPos pos, int x, int z) {
+        int []color = new int[4];
+        color[0] = getBiomeColor(level, pos, x, 4, z, 4);
+        color[1] = getBiomeColor(level, pos, x, 4, z, 12);
+        color[2] = getBiomeColor(level, pos, x, 12, z, 4);
+        color[3] = getBiomeColor(level, pos, x, 12, z, 12);
+        int[] count = new int[4];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (color[i] == color[j]) {
+                    count[i]++;
+                }
+            }
+        }
+        int max = 0;
+        int maxIndex = 0;
+        for (int i = 0; i < 4; i++) {
+            if (count[i] > max) {
+                max = count[i];
+                maxIndex = i;
+            }
+        }
+        return color[maxIndex];
+    }
+
+    private static int getBiomeColor(Level level, EntryPos pos, int x, int offsetX, int z, int offsetZ) {
+        Holder<Biome> biome = level.getBiome(new BlockPos(((pos.chunkX() + x) << 4) + offsetX, 65, ((pos.chunkZ() + z) << 4) + offsetZ));
+        // Biome colors: pastel blue for ocean, green for forests, brown for mountains, yellow for deserts
+        int biomeColor = 0x00ff00;
+        if (biome.containsTag(BiomeTags.IS_OCEAN) || biome.containsTag(BiomeTags.IS_RIVER) || biome.containsTag(BiomeTags.IS_BEACH)) {
+            biomeColor = 0x0000ff;
+        } else if (biome.containsTag(BiomeTags.IS_MOUNTAIN)) {
+            biomeColor = 0x8b4513;
+        } else if (biome.containsTag(Tags.Biomes.IS_DESERT) || biome.containsTag(BiomeTags.IS_BADLANDS)) {
+            biomeColor = 0xffff00;
+        } else if (biome.containsTag(BiomeTags.IS_FOREST)) {
+            biomeColor = 0x006400;
+        } else if (biome.containsTag(Tags.Biomes.IS_PLAINS)) {
+            biomeColor = 0x00ff00;
+        }
+        return biomeColor;
     }
 }
