@@ -4,6 +4,8 @@
       "name": "buildings",
       "color": 16711680,
       "translatableKey": "lostradar.buildings",
+      "u": -1,
+      "v": -1,
       "buildings": [
         "lostcities:building1",
         "lostcities:building2",
@@ -19,6 +21,8 @@
       "name": "center",
       "color": 255,
       "translatableKey": "lostradar.center",
+      "u": 128,
+      "v": 0,
       "buildings": [
         "lostcities:center00",
         "lostcities:center01",
@@ -30,6 +34,8 @@
       "name": "library",
       "color": 16776960,
       "translatableKey": "lostradar.library",
+      "u": 0,
+      "v": 32,
       "buildings": [
         "lostcities:library00",
         "lostcities:library01",
@@ -41,6 +47,8 @@
       "name": "shopping",
       "color": 16711920,
       "translatableKey": "lostradar.shopping",
+      "u": 32,
+      "v": 32,
       "buildings": [
         "lostcities:shopping00",
         "lostcities:shopping01",
@@ -51,6 +59,8 @@
     {
       "name": "default",
       "color": 13421772,
+      "u": -1,
+      "v": -1,
       "translatableKey": "lostradar.default",
       "buildings": [
       ]

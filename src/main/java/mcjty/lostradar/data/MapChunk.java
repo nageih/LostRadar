@@ -11,12 +11,15 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This record represents a map chunk of 16x16 chunks. The chunkX and chunkZ represent the top-left chunk.
- * The data is a flattened array of 16x16 shorts where each short represents a building category ID which
+ * This record represents a map chunk of NxN chunks. The chunkX and chunkZ represent the top-left chunk.
+ * The data is a flattened array of NxN shorts where each short represents a building category ID which
  * is mapped from a palette (separate structure)
  * The biomecolors is a 16x16 flattened array of biome colors
  */
 public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) {
+
+    public static final int MAPCHUNK_SIZE = 8;
+    public static final int MAPCHUNK_MASK = 0x7;
 
     public static final short CITY = Short.MAX_VALUE;
     public static final short HIGHWAY = Short.MAX_VALUE - 1;
@@ -56,16 +59,16 @@ public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) 
 
     // Get the data at the given chunk position. This will return -1 if the chunk position is out of bounds for this map chunk
     public int getDataAt(ChunkPos pos) {
-        int x = pos.x & 0xf;
-        int z = pos.z & 0xf;
-        int index = x + z * 16;
+        int x = pos.x & MAPCHUNK_MASK;
+        int z = pos.z & MAPCHUNK_MASK;
+        int index = x + z * MAPCHUNK_SIZE;
         return data[index];
     }
 
     public int getBiomeColorAt(ChunkPos pos) {
-        int x = pos.x & 0xf;
-        int z = pos.z & 0xf;
-        int index = x + z * 16;
+        int x = pos.x & MAPCHUNK_MASK;
+        int z = pos.z & MAPCHUNK_MASK;
+        int index = x + z * MAPCHUNK_SIZE;
         return biomeColors[index];
     }
 }

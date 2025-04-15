@@ -79,10 +79,10 @@ public class ServerMapData {
         if (info != null) {
             PaletteCache cache = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
             int defaultEntry = cache.getDefaultEntry();
-            short[] data = new short[16 * 16];
-            int[] biomeColors = new int[16 * 16];
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
+            short[] data = new short[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
+            int[] biomeColors = new int[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
+            for (int x = 0; x < MapChunk.MAPCHUNK_SIZE; x++) {
+                for (int z = 0; z < MapChunk.MAPCHUNK_SIZE; z++) {
                     int dataAt = -1;
                     ILostChunkInfo chunk = info.getChunkInfo(pos.chunkX() + x, pos.chunkZ() + z);
                     if (chunk != null) {
@@ -100,9 +100,10 @@ public class ServerMapData {
                             dataAt = MapChunk.CITY;
                         }
                     }
-                    data[x + z * 16] = (short) dataAt;
+                    data[x + z * MapChunk.MAPCHUNK_SIZE] = (short) dataAt;
+                    // @todo use getAverageBiomeColor
                     int biomeColor = getBiomeColor(level, pos, x, 8, z, 8);
-                    biomeColors[x + z * 16] = biomeColor;
+                    biomeColors[x + z * MapChunk.MAPCHUNK_SIZE] = biomeColor;
                 }
             }
             MapChunk mapChunk = new MapChunk(pos.chunkX(), pos.chunkZ(), data, biomeColors);
