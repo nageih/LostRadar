@@ -21,6 +21,9 @@ public class Messages {
 
         registrar.play(PacketRequestMapChunk.class, PacketRequestMapChunk::create, handler -> handler.client(PacketRequestMapChunk::handle));
         registrar.play(PacketReturnMapChunkToClient.class, PacketReturnMapChunkToClient::create, handler -> handler.server(PacketReturnMapChunkToClient::handle));
+
+        registrar.play(PacketStartSearch.class, PacketStartSearch::create, handler -> handler.client(PacketStartSearch::handle));
+        registrar.play(PacketReturnSearchResultsToClient.class, PacketReturnSearchResultsToClient::create, handler -> handler.server(PacketReturnSearchResultsToClient::handle));
     }
 
     public static <T> void sendToPlayer(T packet, Player player) {

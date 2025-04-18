@@ -4,15 +4,16 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.api.ILostChunkInfo;
 import mcjty.lostcities.api.ILostCityInformation;
-import mcjty.lostcities.varia.Tools;
 import mcjty.lostradar.compat.LostCitiesCompat;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketReturnMapChunkToClient;
+import mcjty.lostradar.network.PacketReturnSearchResultsToClient;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BiomeTags;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.Tags;
@@ -20,7 +21,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ServerMapData {
 
@@ -71,6 +74,48 @@ public class ServerMapData {
             // Send the map chunk to all clients
             PacketReturnMapChunkToClient packet = new PacketReturnMapChunkToClient(level.dimension(), mapChunk);
             Messages.sendToAllPlayers(level.dimension(), packet);
+        }
+    }
+
+    private MapChunk getMapChunk(Level level, EntryPos pos) {
+        MapChunk mapChunk = mapChunks.get(pos);
+        if (mapChunk == null) {
+            mapChunk = calculateMapChunk(level, pos);
+        }
+        return mapChunk;
+    }
+
+    public void startSearch(Player player, String category) {
+        // @todo make async
+        Level level = player.level();
+        Set<ChunkPos> result = new HashSet<>();
+        EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
+        for (int x = -40 ; x <= 40 ; x++) {
+            for (int z = -40 ; z <= 40 ; z++) {
+                EntryPos entryPos = pos.offset(x, z);
+                MapChunk mapChunk = getMapChunk(level, entryPos);
+                if (mapChunk != null) {
+                    findCategory(level, mapChunk, category, result);
+                }
+            }
+        }
+        // Send the result to the player
+        Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result), player);
+    }
+
+    // Given a map chunk and a category, scan the map chunk and return the set of chunk positions that match the category
+    private void findCategory(Level level, MapChunk mapChunk, String category, Set<ChunkPos> result) {
+        PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
+        for (int x = 0; x < MapChunk.MAPCHUNK_SIZE; x++) {
+            for (int z = 0; z < MapChunk.MAPCHUNK_SIZE; z++) {
+                int dataAt = mapChunk.getDataAt(new ChunkPos(mapChunk.chunkX() + x, mapChunk.chunkZ() + z));
+                if (dataAt != -1) {
+                    MapPalette.PaletteEntry entry = palette.getPalette().palette().get(dataAt);
+                    if (category.equals(entry.name())) {
+                        result.add(new ChunkPos(mapChunk.chunkX() + x, mapChunk.chunkZ() + z));
+                    }
+                }
+            }
         }
     }
 

@@ -37,5 +37,9 @@ public record EntryPos(ResourceKey<Level> level, int chunkX, int chunkZ) {
         int topLeftZ = pos.z - (pos.z & MapChunk.MAPCHUNK_MASK);
         return new EntryPos(level, topLeftX, topLeftZ);
     }
+
+    public EntryPos offset(int x, int z) {
+        return new EntryPos(level, chunkX + x, chunkZ + z);
+    }
 }
 
