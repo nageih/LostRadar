@@ -89,10 +89,12 @@ public class ServerMapData {
         // @todo make async
         Level level = player.level();
         Set<ChunkPos> result = new HashSet<>();
+        Set<EntryPos> searchedChunks = new HashSet<>();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
         for (int x = -10 ; x <= 10 ; x++) {
             for (int z = -10 ; z <= 10 ; z++) {
                 EntryPos entryPos = pos.offset(x, z);
+                searchedChunks.add(entryPos);
                 MapChunk mapChunk = getMapChunk(level, entryPos);
                 if (mapChunk != null) {
                     findCategory(level, mapChunk, category, result);
@@ -100,7 +102,7 @@ public class ServerMapData {
             }
         }
         // Send the result to the player
-        Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result), player);
+        Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result, searchedChunks), player);
     }
 
     // Given a map chunk and a category, scan the map chunk and return the set of chunk positions that match the category

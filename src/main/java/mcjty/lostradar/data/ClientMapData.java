@@ -18,8 +18,12 @@ public class ClientMapData {
     private final Map<EntryPos, MapChunk> mapChunks = new HashMap<>();
     private final Set<EntryPos> requestedChunks = new HashSet<>();
     private final Set<ChunkPos> searchResults = new HashSet<>();
+    private final Set<EntryPos> searchedChunks = new HashSet<>();
 
     private static final ClientMapData INSTANCE = new ClientMapData();
+
+    private String searchString = "";
+    private boolean showSearched = false;
 
     @Nonnull
     public static ClientMapData getData() {
@@ -33,14 +37,40 @@ public class ClientMapData {
         mapChunks.clear();
         requestedChunks.clear();
         searchResults.clear();
+        searchedChunks.clear();
+        searchString = "";
+        showSearched = false;
     }
 
-    public void setSearchResults(Set<ChunkPos> positions) {
+    public void setSearchResults(Set<ChunkPos> positions, Set<EntryPos> chunks) {
+        searchResults.clear();
         searchResults.addAll(positions);
+        searchedChunks.clear();
+        searchedChunks.addAll(chunks);
     }
 
     public Set<ChunkPos> getSearchResults() {
         return searchResults;
+    }
+
+    public Set<EntryPos> getSearchedChunks() {
+        return searchedChunks;
+    }
+
+    public String getSearchString() {
+        return searchString;
+    }
+
+    public void setSearchString(String searchString) {
+        this.searchString = searchString;
+    }
+
+    public boolean isShowSearched() {
+        return showSearched;
+    }
+
+    public void setShowSearched(boolean showSearched) {
+        this.showSearched = showSearched;
     }
 
     public void addChunk(ResourceKey<Level> level, MapChunk chunk) {

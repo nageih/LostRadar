@@ -6,6 +6,7 @@ import mcjty.lib.gui.*;
 import mcjty.lib.gui.widgets.*;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.ClientMapData;
+import mcjty.lostradar.data.EntryPos;
 import mcjty.lostradar.data.MapPalette;
 import mcjty.lostradar.data.PaletteCache;
 import mcjty.lostradar.network.Messages;
@@ -26,10 +27,14 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     private static final int xSize = 340;
     private static final int ySize = 236;
 
+    private static final int MAPCELL_SIZE = 10;
+    private static final int MAP_DIM = 10;
+
     private static final ResourceLocation ICONS = new ResourceLocation(LostRadar.MODID, "textures/gui/icons.png");
 
     private WidgetList categoryList;
     private Button scanButton;
+    private ToggleButton showSearched;
 
     public GuiRadar() {
         super(xSize, ySize, ManualEntry.EMPTY);
@@ -48,8 +53,8 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int l = (this.height - ySize) / 2;
 
         Panel toplevel = positional().filledRectThickness(2);
-        categoryList = Widgets.list(238, 12, 93, ySize - 33);
-        scanButton = Widgets.button(238, ySize - 28, 93, 15, "Scan")
+        categoryList = Widgets.list(238, 12, 93, ySize - 53);
+        scanButton = Widgets.button(238, ySize - 48, 93, 15, "Scan")
                 .event(() -> {
                     int selected = categoryList.getSelected();
                     if (selected >= 0) {
@@ -59,9 +64,11 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         if (!searchText.isEmpty()) {
                             Messages.sendToServer(new PacketStartSearch(searchText));
                         }
+                        ClientMapData.getData().setSearchString(searchText);
                     }
                 });
-        toplevel.children(categoryList, scanButton);
+        showSearched = new ToggleButton().hint(238, ySize - 28, 93, 14).text("Searched");
+        toplevel.children(categoryList, scanButton, showSearched);
         toplevel.bounds(k, l, xSize, ySize);
         populateCategoryList();
 
@@ -74,25 +81,30 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         // For an area of 21x21 chunks around the player we render the color
         int borderLeft = this.guiLeft + 12;
         int borderTop = this.guiTop + 12;
-        int size = 10;
-        int dim = 10;
         // Make a copy of searchResults so that we can modify it
         Set<ChunkPos> searchResults = new HashSet<>(data.getSearchResults());
-        for (int x = -dim; x <= dim; x++) {
-            for (int z = -dim; z <= dim; z++) {
+        renderCityGrid(graphics, searchResults, p, data, borderLeft, borderTop);
+        // Now render the remaining search results but at the border (just beyond the map)
+        renderDistantSearchResults(graphics, searchResults, p, borderLeft, borderTop);
+    }
+
+    private void renderCityGrid(GuiGraphics graphics, Set<ChunkPos> searchResults, ChunkPos p, ClientMapData data, int borderLeft, int borderTop) {
+        Set<EntryPos> searchedChunks = data.getSearchedChunks();
+        for (int x = -MAP_DIM; x <= MAP_DIM; x++) {
+            for (int z = -MAP_DIM; z <= MAP_DIM; z++) {
                 ChunkPos pos = new ChunkPos(p.x + x, p.z + z);
                 int biomeColor = data.getBiomeColor(Minecraft.getInstance().level, pos);
                 if (biomeColor != -1) {
                     // Render the biome color
-                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x+dim) * size, borderTop + (z+dim) * size, borderLeft + (x + dim + 1) * size, borderTop + (z + dim + 1) * size, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
+                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
                 }
                 MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
                 if (entry != null) {
                     // Render the color
                     int color = entry.color();
                     int fullColor = 0xff000000 | (color & 0x00ffffff);
-                    int startX = borderLeft + (x + dim) * size;
-                    int startZ = borderTop + (z + dim) * size;
+                    int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
+                    int startZ = borderTop + (z + MAP_DIM) * MAPCELL_SIZE;
                     int borderColor = 0xff333333;
                     if (searchResults.contains(pos)) {
                         // This is a search result
@@ -101,14 +113,14 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     }
 
                     if (entry == MapPalette.CITY) {
-                        RenderHelper.drawBeveledBox(graphics, startX, startZ, startX + size, startZ + size, fullColor, fullColor, fullColor);
+                        RenderHelper.drawBeveledBox(graphics, startX, startZ, startX + MAPCELL_SIZE, startZ + MAPCELL_SIZE, fullColor, fullColor, fullColor);
 
                         // Determine pattern offset
                         int patternOffsetX = x % 2;
                         int patternOffsetZ = z % 2;
 
                         // Draw 5×5 dithered black squares
-                        int step = size / 5;
+                        int step = MAPCELL_SIZE / 5;
                         for (int i = 0; i < 5; i++) {
                             for (int j = 0; j < 5; j++) {
                                 // Simple dither condition — you can tweak this for different patterns
@@ -122,21 +134,29 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                             }
                         }
                     } else {
-                        RenderHelper.drawBeveledBox(graphics, borderLeft + (x + dim) * size, borderTop + (z + dim) * size, borderLeft + (x + dim + 1) * size, borderTop + (z + dim + 1) * size, borderColor, borderColor, 0xff000000 + color);
+                        RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
                     }
                     if (entry.iconU() >= 0) {
                         // We have an icon
                         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                        graphics.blit(ICONS, startX+2, startZ+2, size-4, size-4, entry.iconU(), entry.iconV(), 32, 32, 256, 256);
+                        graphics.blit(ICONS, startX+2, startZ+2, MAPCELL_SIZE -4, MAPCELL_SIZE -4, entry.iconU(), entry.iconV(), 32, 32, 256, 256);
                     }
                 }
                 if (x == 0 && z == 0) {
                     // Render the player as a white smaller dot
-                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x + dim) * size + 3, borderTop + (z + dim) * size + 3, borderLeft + (x + dim + 1) * size - 3, borderTop + (z + dim + 1) * size - 3, 0xffffffff, 0xffffffff, 0xffffffff);
+                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE + 3, borderTop + (z + MAP_DIM) * MAPCELL_SIZE + 3, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE - 3, 0xffffffff, 0xffffffff, 0xffffffff);
+                }
+
+                // If we want to show searched areas we render a darker overlay on top of the map parts that we didn't search
+                if (showSearched.isPressed() && !searchedChunks.contains(EntryPos.fromChunkPos(Minecraft.getInstance().level.dimension(), pos))) {
+                    // Render a darker overlay
+                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0x80000000, 0x80000000, 0x80000000);
                 }
             }
         }
-        // Now render the remaining search results but at the border (just beyond the map)
+    }
+
+    private void renderDistantSearchResults(GuiGraphics graphics, Set<ChunkPos> searchResults, ChunkPos p, int borderLeft, int borderTop) {
         for (ChunkPos pos : searchResults) {
             int dx = pos.x - p.x;
             int dz = pos.z - p.z;
@@ -147,12 +167,12 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
             int adz = Math.abs(dz);
             int bx, bz;
 
-            if (adx * dim >= adz * dim) {
-                bx = Integer.signum(dx) * (dim + 1);
-                bz = (int) Math.round((double) dz / adx * (dim + 1));
+            if (adx * MAP_DIM >= adz * MAP_DIM) {
+                bx = Integer.signum(dx) * (MAP_DIM + 1);
+                bz = (int) Math.round((double) dz / adx * (MAP_DIM + 1));
             } else {
-                bz = Integer.signum(dz) * (dim + 1);
-                bx = (int) Math.round((double) dx / adz * (dim + 1));
+                bz = Integer.signum(dz) * (MAP_DIM + 1);
+                bx = (int) Math.round((double) dx / adz * (MAP_DIM + 1));
             }
 
             // Color based on distance to center:
@@ -160,35 +180,30 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
             // - Black when the search result is 80 chunks away
             // - Gray when the search result is in between
             int distance = Math.max(Math.abs(dx), Math.abs(dz));
-            int minDistance = dim + 1;
+            int minDistance = MAP_DIM + 1;
             int maxDistance = 80;
             int clamped = Math.max(0, Math.min(255, (int)(255 * (1 - (double)(distance - minDistance) / (maxDistance - minDistance)))));
             int color = 0xff000000 | (clamped << 16) | (clamped << 8) | clamped;
-
-//            double distance = Math.sqrt(dx * dx + dz * dz);
-//            double minDistance = Math.sqrt(dim * dim + dim * dim);
-//            double maxDistance = Math.sqrt(80 * 80 + 80 * 80);
-//            int comp = (int) (255 * (1 - (distance - minDistance) / (maxDistance - minDistance)));
-//            int color = 0xff000000 | (comp << 16) | (comp << 8) | comp;
-            RenderHelper.drawBeveledBox(graphics, borderLeft + (bx + dim) * size + 3, borderTop + (bz + dim) * size + 3, borderLeft + (bx + dim + 1) * size - 3, borderTop + (bz + dim + 1) * size - 3, color, color, color);
+            RenderHelper.drawBeveledBox(graphics, borderLeft + (bx + MAP_DIM) * MAPCELL_SIZE + 3, borderTop + (bz + MAP_DIM) * MAPCELL_SIZE + 3, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
         }
     }
 
     private void populateCategoryList() {
+        ClientMapData data = ClientMapData.getData();
+        String searchString = data.getSearchString();
         int selected = categoryList.getSelected();
         categoryList.removeChildren();
         PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(Minecraft.getInstance().level));
         for (MapPalette.PaletteEntry category : palette.getPalette().palette()) {
             categoryList.children(makeLine(category));
+            if (!searchString.isEmpty() && category.name().equals(searchString)) {
+                selected = categoryList.getChildren().size() - 1;
+            }
         }
         categoryList.selected(selected);
     }
 
     private Widget<Label>  makeLine(MapPalette.PaletteEntry category) {
-        String name = category.name();
-        if (name.isEmpty()) {
-            name = "Unknown";
-        }
         return Widgets.label(category.name());
     }
 
@@ -241,4 +256,5 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         WindowManager manager = getWindow().getWindowManager();
         manager.mouseScrolled(x, y, amount);
         return true;
-    }}
+    }
+}
