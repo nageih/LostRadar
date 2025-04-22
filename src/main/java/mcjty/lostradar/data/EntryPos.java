@@ -38,8 +38,9 @@ public record EntryPos(ResourceKey<Level> level, int chunkX, int chunkZ) {
         return new EntryPos(level, topLeftX, topLeftZ);
     }
 
+    // Offset is in map chunk size
     public EntryPos offset(int x, int z) {
-        return new EntryPos(level, chunkX + x, chunkZ + z);
+        return new EntryPos(level, chunkX + x * MapChunk.MAPCHUNK_SIZE, chunkZ + z * MapChunk.MAPCHUNK_SIZE);
     }
 }
 

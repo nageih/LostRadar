@@ -90,8 +90,8 @@ public class ServerMapData {
         Level level = player.level();
         Set<ChunkPos> result = new HashSet<>();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
-        for (int x = -40 ; x <= 40 ; x++) {
-            for (int z = -40 ; z <= 40 ; z++) {
+        for (int x = -10 ; x <= 10 ; x++) {
+            for (int z = -10 ; z <= 10 ; z++) {
                 EntryPos entryPos = pos.offset(x, z);
                 MapChunk mapChunk = getMapChunk(level, entryPos);
                 if (mapChunk != null) {
@@ -110,8 +110,8 @@ public class ServerMapData {
             for (int z = 0; z < MapChunk.MAPCHUNK_SIZE; z++) {
                 int dataAt = mapChunk.getDataAt(new ChunkPos(mapChunk.chunkX() + x, mapChunk.chunkZ() + z));
                 if (dataAt != -1) {
-                    MapPalette.PaletteEntry entry = palette.getPalette().palette().get(dataAt);
-                    if (category.equals(entry.name())) {
+                    MapPalette.PaletteEntry entry = palette.getEntryForIndex(dataAt);
+                    if (entry != null && category.equals(entry.name())) {
                         result.add(new ChunkPos(mapChunk.chunkX() + x, mapChunk.chunkZ() + z));
                     }
                 }

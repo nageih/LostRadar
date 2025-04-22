@@ -40,8 +40,7 @@ public record PacketReturnSearchResultsToClient(Set<ChunkPos> positions) impleme
         ctx.workHandler().submitAsync(() -> {
             ctx.player().ifPresent(player -> {
                 ClientMapData clientMapData = ClientMapData.getData();
-                // @todo
-//                clientMapData.addChunk(level, chunk);
+                clientMapData.setSearchResults(positions);
             });
         });
     }

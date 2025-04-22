@@ -52,6 +52,13 @@ public class PaletteCache {
         return palette;
     }
 
+    public MapPalette.PaletteEntry getEntryForIndex(int index) {
+        if (index < 0 || index >= palette.palette().size()) {
+            return null;
+        }
+        return palette.palette().get(index);
+    }
+
     @Nullable
     public MapPalette.PaletteEntry getEntryForBuilding(ResourceLocation building) {
         return entryForBuilding.get(building);

@@ -17,6 +17,7 @@ public class ClientMapData {
 
     private final Map<EntryPos, MapChunk> mapChunks = new HashMap<>();
     private final Set<EntryPos> requestedChunks = new HashSet<>();
+    private final Set<ChunkPos> searchResults = new HashSet<>();
 
     private static final ClientMapData INSTANCE = new ClientMapData();
 
@@ -31,6 +32,15 @@ public class ClientMapData {
     public void cleanup() {
         mapChunks.clear();
         requestedChunks.clear();
+        searchResults.clear();
+    }
+
+    public void setSearchResults(Set<ChunkPos> positions) {
+        searchResults.addAll(positions);
+    }
+
+    public Set<ChunkPos> getSearchResults() {
+        return searchResults;
     }
 
     public void addChunk(ResourceKey<Level> level, MapChunk chunk) {

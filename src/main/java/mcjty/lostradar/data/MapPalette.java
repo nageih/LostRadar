@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public record MapPalette(List<PaletteEntry> palette) {
             Codec.INT.fieldOf("v").forGetter(PaletteEntry::iconV),
             Codec.list(ResourceLocation.CODEC).fieldOf("buildings").forGetter(p -> new ArrayList<>(p.buildings))
     ).apply(instance, (name, color, translatableKey, u, v, b) -> {
-        Set<ResourceLocation> buildings = Set.of();
+        Set<ResourceLocation> buildings = new HashSet<>();
         if (b != null) {
             for (ResourceLocation location : b) {
                 buildings.add(location);
@@ -47,5 +48,4 @@ public record MapPalette(List<PaletteEntry> palette) {
         Registry<MapPalette> registry = level.registryAccess().registryOrThrow(CustomRegistries.PALETTE_REGISTRY_KEY);
         return registry.get(new ResourceLocation(LostRadar.MODID, "default"));
     }
-
 }
