@@ -67,7 +67,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         ClientMapData.getData().setSearchString(searchText);
                     }
                 });
-        showSearched = new ToggleButton().hint(238, ySize - 28, 93, 14).text("Searched");
+        showSearched = new ToggleButton().hint(238, ySize - 28, 93, 14).text("Searched").pressed(ClientMapData.getData().isShowSearched()).event(() -> {
+            ClientMapData.getData().setShowSearched(showSearched.isPressed());
+        });
         toplevel.children(categoryList, scanButton, showSearched);
         toplevel.bounds(k, l, xSize, ySize);
         populateCategoryList();
