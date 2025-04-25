@@ -10,7 +10,10 @@ import mcjty.lostradar.network.PacketReturnMapChunkToClient;
 import mcjty.lostradar.network.PacketReturnSearchResultsToClient;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
@@ -20,10 +23,7 @@ import net.minecraftforge.common.Tags;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ServerMapData {
 
@@ -53,8 +53,13 @@ public class ServerMapData {
         return INSTANCE;
     }
 
+    private record PlayerSearch(ResourceKey<Level> level, String searchString, Set<EntryPos> searchTodo) {
+    }
+    private Map<UUID, PlayerSearch> searches = new HashMap<>();
+
     public void cleanup() {
         mapChunks.clear();
+        searches.clear();
     }
 
     private ServerMapData() {
@@ -86,23 +91,41 @@ public class ServerMapData {
     }
 
     public void startSearch(Player player, String category) {
-        // @todo make async
         Level level = player.level();
-        Set<ChunkPos> result = new HashSet<>();
-        Set<EntryPos> searchedChunks = new HashSet<>();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
+        PlayerSearch search = new PlayerSearch(level.dimension(), category, new HashSet<>());
         for (int x = -10 ; x <= 10 ; x++) {
             for (int z = -10 ; z <= 10 ; z++) {
                 EntryPos entryPos = pos.offset(x, z);
-                searchedChunks.add(entryPos);
-                MapChunk mapChunk = getMapChunk(level, entryPos);
-                if (mapChunk != null) {
-                    findCategory(level, mapChunk, category, result);
-                }
+                search.searchTodo().add(entryPos);
             }
         }
-        // Send the result to the player
-        Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result, searchedChunks), player);
+        searches.put(player.getUUID(), search);
+    }
+
+    public void tickSearch(Level overworld) {
+        Set<UUID> searchesToRemove = new HashSet<>();
+        for (Map.Entry<UUID, PlayerSearch> entry : searches.entrySet()) {
+            PlayerSearch search = entry.getValue();
+            if (!search.searchTodo().isEmpty()) {
+                ServerLevel level = overworld.getServer().getLevel(search.level());
+                Set<ChunkPos> result = new HashSet<>();
+                // @todo use a queue?
+                EntryPos pos = search.searchTodo.iterator().next();
+                search.searchTodo.remove(pos);
+                MapChunk mapChunk = getMapChunk(overworld, pos);
+                if (mapChunk != null) {
+                    findCategory(level, mapChunk, search.searchString(), result);
+                    ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.getKey());
+                    Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result, Set.of(pos)), player);
+                }
+            } else {
+                searchesToRemove.add(entry.getKey());
+            }
+        }
+        for (UUID uuid : searchesToRemove) {
+            searches.remove(uuid);
+        }
     }
 
     // Given a map chunk and a category, scan the map chunk and return the set of chunk positions that match the category

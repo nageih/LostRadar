@@ -6,6 +6,7 @@ import mcjty.lostradar.setup.ModSetup;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -73,6 +74,13 @@ public class EventHandlers {
         ServerMapData.getData().cleanup();
         if (event.getEntity().level().isClientSide) {
             ClientMapData.getData().cleanup();
+        }
+    }
+
+    @SubscribeEvent
+    public void onLevelTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            ServerMapData.getData().tickSearch(event.getServer().getLevel(Level.OVERWORLD));
         }
     }
 }

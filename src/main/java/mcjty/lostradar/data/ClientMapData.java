@@ -42,10 +42,13 @@ public class ClientMapData {
         showSearched = false;
     }
 
-    public void setSearchResults(Set<ChunkPos> positions, Set<EntryPos> chunks) {
+    public void clearSearchResults() {
         searchResults.clear();
-        searchResults.addAll(positions);
         searchedChunks.clear();
+    }
+
+    public void addSearchResults(Set<ChunkPos> positions, Set<EntryPos> chunks) {
+        searchResults.addAll(positions);
         searchedChunks.addAll(chunks);
     }
 
