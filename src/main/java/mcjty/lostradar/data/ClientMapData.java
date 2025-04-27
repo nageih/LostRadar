@@ -23,7 +23,6 @@ public class ClientMapData {
     private static final ClientMapData INSTANCE = new ClientMapData();
 
     private String searchString = "";
-    private boolean showSearched = false;
 
     @Nonnull
     public static ClientMapData getData() {
@@ -39,7 +38,6 @@ public class ClientMapData {
         searchResults.clear();
         searchedChunks.clear();
         searchString = "";
-        showSearched = false;
     }
 
     public void clearSearchResults() {
@@ -66,14 +64,6 @@ public class ClientMapData {
 
     public void setSearchString(String searchString) {
         this.searchString = searchString;
-    }
-
-    public boolean isShowSearched() {
-        return showSearched;
-    }
-
-    public void setShowSearched(boolean showSearched) {
-        this.showSearched = showSearched;
     }
 
     public void addChunk(ResourceKey<Level> level, MapChunk chunk) {

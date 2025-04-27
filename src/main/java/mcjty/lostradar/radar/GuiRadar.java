@@ -36,7 +36,6 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
     private WidgetList categoryList;
     private Button scanButton;
-    private ToggleButton showSearched;
 
     public GuiRadar() {
         super(xSize, ySize, ManualEntry.EMPTY);
@@ -56,7 +55,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
         Panel toplevel = positional().filledRectThickness(2);
         categoryList = Widgets.list(238, 12, 93, ySize - 53);
-        scanButton = Widgets.button(238, ySize - 42, 93, 15, "Scan")
+        scanButton = Widgets.button(238, ySize - 40, 93, 15, "Scan")
                 .event(() -> {
                     int selected = categoryList.getSelected();
                     if (selected >= 0) {
@@ -70,10 +69,13 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         ClientMapData.getData().clearSearchResults();
                     }
                 });
-        showSearched = new ToggleButton().hint(238, ySize - 28, 93, 14).text("Searched").checkMarker(true).pressed(ClientMapData.getData().isShowSearched()).event(() -> {
-            ClientMapData.getData().setShowSearched(showSearched.isPressed());
+        Button clearButton = Widgets.button(238, ySize - 22, 93, 15, "Clear").event(() -> {
+            ClientMapData.getData().clearSearchResults();
+            ClientMapData.getData().setSearchString("");
+            Messages.sendToServer(new PacketStartSearch(""));
+            categoryList.selected(-1);
         });
-        toplevel.children(categoryList, scanButton, showSearched);
+        toplevel.children(categoryList, scanButton, clearButton);
         toplevel.bounds(k, l, xSize, ySize);
         populateCategoryList();
 
@@ -156,7 +158,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                 }
 
                 // If we want to show searched areas we render a darker overlay on top of the map parts that we didn't search
-                if (showSearched.isPressed() && !searchedChunks.contains(EntryPos.fromChunkPos(Minecraft.getInstance().level.dimension(), pos))) {
+                if (!searchedChunks.isEmpty() && !searchedChunks.contains(EntryPos.fromChunkPos(Minecraft.getInstance().level.dimension(), pos))) {
                     // Render a darker overlay
                     RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0x80000000, 0x80000000, 0x80000000);
                 }

@@ -107,6 +107,10 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> {
     }
 
     public void startSearch(Player player, String category) {
+        if (category.isEmpty()) {
+            searches.remove(player.getUUID());
+            return;
+        }
         Level level = player.level();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
         PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>());
