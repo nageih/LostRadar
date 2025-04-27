@@ -31,7 +31,7 @@ public record PacketRequestMapChunk(EntryPos pos) implements CustomPacketPayload
     public void handle(PlayPayloadContext ctx) {
         ctx.workHandler().submitAsync(() -> {
             ctx.player().ifPresent(player -> {
-                ServerMapData mapData = ServerMapData.getData();
+                ServerMapData mapData = ServerMapData.getData(player.level());
                 mapData.requestMapChunk(player.level(), pos);
             });
         });

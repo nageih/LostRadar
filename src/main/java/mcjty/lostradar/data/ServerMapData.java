@@ -1,7 +1,9 @@
 package mcjty.lostradar.data;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import mcjty.lib.worlddata.AbstractWorldData;
 import mcjty.lostcities.api.ILostChunkInfo;
 import mcjty.lostcities.api.ILostCityInformation;
 import mcjty.lostradar.compat.LostCitiesCompat;
@@ -10,6 +12,9 @@ import mcjty.lostradar.network.PacketReturnMapChunkToClient;
 import mcjty.lostradar.network.PacketReturnSearchResultsToClient;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -22,12 +27,12 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.Tags;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 
-public class ServerMapData {
+public class ServerMapData extends AbstractWorldData<ServerMapData> {
 
     private final Map<EntryPos, MapChunk> mapChunks = new HashMap<>();
+    private final static String RADAR_CACHE = "RadarCache";
 
     private static final Codec<Pair<EntryPos, MapChunk>> PAIR_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntryPos.CODEC.fieldOf("entryPos").forGetter(Pair::getLeft),
@@ -46,11 +51,8 @@ public class ServerMapData {
         return map;
     }));
 
-    private static final ServerMapData INSTANCE = new ServerMapData();
-
-    @Nonnull
-    public static ServerMapData getData() {
-        return INSTANCE;
+    public static ServerMapData getData(Level world) {
+        return getData(world, ServerMapData::new, ServerMapData::new, RADAR_CACHE);
     }
 
     private record PlayerSearch(ResourceKey<Level> level, String searchString, Set<EntryPos> searchTodo) {
@@ -58,22 +60,36 @@ public class ServerMapData {
     private Map<UUID, PlayerSearch> searches = new HashMap<>();
 
     public void cleanup() {
-        mapChunks.clear();
         searches.clear();
     }
 
     private ServerMapData() {
     }
 
+    private ServerMapData(CompoundTag tag) {
+        DataResult<Map<EntryPos, MapChunk>> result = MAP_CODEC.parse(NbtOps.INSTANCE, tag.get("chunks"));
+        if (result.result().isPresent()) {
+            mapChunks.putAll(result.result().get());
+        }
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        DataResult<Tag> result = MAP_CODEC.encodeStart(NbtOps.INSTANCE, mapChunks);
+        if (result.result().isPresent()) {
+            tag.put("chunks", result.result().get());
+        }
+        return tag;
+    }
+
+
     public void requestMapChunk(Level level, EntryPos pos) {
         if (level.isClientSide) {
             throw new RuntimeException("Don't access this client-side!");
         }
         MapChunk mapChunk = mapChunks.get(pos);
-        System.out.println("SERVER: get request for " + pos + " and we got " + mapChunk);
         if (mapChunk == null) {
             mapChunk = calculateMapChunk(level, pos);
-            System.out.println("SERVER: calculated for " + pos + " and we got " + mapChunk);
         }
         if (mapChunk != null) {
             // Send the map chunk to all clients
@@ -93,11 +109,25 @@ public class ServerMapData {
     public void startSearch(Player player, String category) {
         Level level = player.level();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
-        PlayerSearch search = new PlayerSearch(level.dimension(), category, new HashSet<>());
-        for (int x = -10 ; x <= 10 ; x++) {
-            for (int z = -10 ; z <= 10 ; z++) {
-                EntryPos entryPos = pos.offset(x, z);
-                search.searchTodo().add(entryPos);
+        PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>());
+        // Add all the chunks in a 10x10 square around the player starting from the player
+        // position and going outwards
+        for (int radius = 0 ; radius <= 10 ; radius++) {
+            if (radius == 0) {
+                search.searchTodo().add(pos);
+            } else {
+                for (int x = -radius ; x <= radius ; x++) {
+                    EntryPos entryPos = pos.offset(x, radius);
+                    search.searchTodo().add(entryPos);
+                    entryPos = pos.offset(x, -radius);
+                    search.searchTodo().add(entryPos);
+                }
+                for (int z = -radius + 1 ; z <= radius - 1 ; z++) {
+                    EntryPos entryPos = pos.offset(radius, z);
+                    search.searchTodo().add(entryPos);
+                    entryPos = pos.offset(-radius, z);
+                    search.searchTodo().add(entryPos);
+                }
             }
         }
         searches.put(player.getUUID(), search);
@@ -178,6 +208,7 @@ public class ServerMapData {
             }
             MapChunk mapChunk = new MapChunk(pos.chunkX(), pos.chunkZ(), data, biomeColors);
             mapChunks.put(pos, mapChunk);
+            setDirty();
             return mapChunk;
         }
         return null;

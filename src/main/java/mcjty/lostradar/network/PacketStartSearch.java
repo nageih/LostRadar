@@ -30,7 +30,7 @@ public record PacketStartSearch(String category) implements CustomPacketPayload 
     public void handle(PlayPayloadContext ctx) {
         ctx.workHandler().submitAsync(() -> {
             ctx.player().ifPresent(player -> {
-                ServerMapData mapData = ServerMapData.getData();
+                ServerMapData mapData = ServerMapData.getData(player.level());
                 mapData.startSearch(player, category);
             });
         });

@@ -13,6 +13,7 @@ import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketStartSearch;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
@@ -31,6 +32,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     private static final int MAP_DIM = 10;
 
     private static final ResourceLocation ICONS = new ResourceLocation(LostRadar.MODID, "textures/gui/icons.png");
+    private static final ResourceLocation MAP_ICONS_LOCATION = new ResourceLocation("textures/map/map_icons.png");
 
     private WidgetList categoryList;
     private Button scanButton;
@@ -54,7 +56,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
         Panel toplevel = positional().filledRectThickness(2);
         categoryList = Widgets.list(238, 12, 93, ySize - 53);
-        scanButton = Widgets.button(238, ySize - 48, 93, 15, "Scan")
+        scanButton = Widgets.button(238, ySize - 42, 93, 15, "Scan")
                 .event(() -> {
                     int selected = categoryList.getSelected();
                     if (selected >= 0) {
@@ -68,7 +70,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         ClientMapData.getData().clearSearchResults();
                     }
                 });
-        showSearched = new ToggleButton().hint(238, ySize - 28, 93, 14).text("Searched").pressed(ClientMapData.getData().isShowSearched()).event(() -> {
+        showSearched = new ToggleButton().hint(238, ySize - 28, 93, 14).text("Searched").checkMarker(true).pressed(ClientMapData.getData().isShowSearched()).event(() -> {
             ClientMapData.getData().setShowSearched(showSearched.isPressed());
         });
         toplevel.children(categoryList, scanButton, showSearched);
@@ -101,13 +103,13 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     // Render the biome color
                     RenderHelper.drawBeveledBox(graphics, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
                 }
+                int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
+                int startZ = borderTop + (z + MAP_DIM) * MAPCELL_SIZE;
                 MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
                 if (entry != null) {
                     // Render the color
                     int color = entry.color();
                     int fullColor = 0xff000000 | (color & 0x00ffffff);
-                    int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
-                    int startZ = borderTop + (z + MAP_DIM) * MAPCELL_SIZE;
                     int borderColor = 0xff333333;
                     if (searchResults.contains(pos)) {
                         // This is a search result
@@ -146,8 +148,11 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     }
                 }
                 if (x == 0 && z == 0) {
+                    // Get the angle from the player's rotation
+                    float angle = Minecraft.getInstance().player.getYRot() + 180;
                     // Render the player as a white smaller dot
-                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE + 3, borderTop + (z + MAP_DIM) * MAPCELL_SIZE + 3, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE - 3, 0xffffffff, 0xffffffff, 0xffffffff);
+                    RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                    RenderHelper.drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, MAP_ICONS_LOCATION, 0, 0, 16, 16);
                 }
 
                 // If we want to show searched areas we render a darker overlay on top of the map parts that we didn't search

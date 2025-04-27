@@ -3,6 +3,7 @@ package mcjty.lostradar;
 import mcjty.lostradar.commands.ModCommands;
 import mcjty.lostradar.data.*;
 import mcjty.lostradar.setup.ModSetup;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -65,13 +66,13 @@ public class EventHandlers {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         PaletteCache.cleanup();
-        ServerMapData.getData().cleanup();
+        ServerMapData.getData(event.getServer().overworld()).cleanup();
     }
 
     @SubscribeEvent
     public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PaletteCache.cleanup();
-        ServerMapData.getData().cleanup();
+        ServerMapData.getData(event.getEntity().level()).cleanup();
         if (event.getEntity().level().isClientSide) {
             ClientMapData.getData().cleanup();
         }
@@ -80,7 +81,8 @@ public class EventHandlers {
     @SubscribeEvent
     public void onLevelTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
-            ServerMapData.getData().tickSearch(event.getServer().getLevel(Level.OVERWORLD));
+            ServerLevel overworld = event.getServer().overworld();
+            ServerMapData.getData(overworld).tickSearch(overworld);
         }
     }
 }
