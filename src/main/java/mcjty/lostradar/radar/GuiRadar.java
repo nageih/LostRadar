@@ -1,6 +1,7 @@
 package mcjty.lostradar.radar;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import mcjty.lib.client.BatchQuadGuiRenderer;
 import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.*;
 import mcjty.lib.gui.widgets.*;
@@ -18,7 +19,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static mcjty.lib.gui.widgets.Widgets.positional;
@@ -83,6 +86,8 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     }
 
     private void renderMap(GuiGraphics graphics) {
+        BatchQuadGuiRenderer batch = new BatchQuadGuiRenderer();
+
         ClientMapData data = ClientMapData.getData();
         ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
         // For an area of 21x21 chunks around the player we render the color
@@ -90,20 +95,40 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int borderTop = this.guiTop + 12;
         // Make a copy of searchResults so that we can modify it
         Set<ChunkPos> searchResults = new HashSet<>(data.getSearchResults());
-        renderCityGrid(graphics, searchResults, p, data, borderLeft, borderTop);
+        List<Icon> icons = renderCityGrid(batch, searchResults, p, data, borderLeft, borderTop);
+
         // Now render the remaining search results but at the border (just beyond the map)
-        renderDistantSearchResults(graphics, searchResults, p, borderLeft, borderTop);
+        renderDistantSearchResults(batch, searchResults, p, borderLeft, borderTop);
+
+        batch.render(graphics);
+
+        // Get the angle from the player's rotation
+        float angle = Minecraft.getInstance().player.getYRot() + 180;
+        // Render the player as a white smaller dot
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        int startX = borderLeft + (MAP_DIM) * MAPCELL_SIZE;
+        int startZ = borderTop + (MAP_DIM) * MAPCELL_SIZE;
+        RenderHelper.drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, MAP_ICONS_LOCATION, 0, 0, 16, 16);
+
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        for (Icon icon : icons) {
+            graphics.blit(ICONS, icon.x(), icon.y(), icon.w(), icon.h(), icon.u(), icon.v(), icon.pw(), icon.ph(), 256, 256);
+        }
     }
 
-    private void renderCityGrid(GuiGraphics graphics, Set<ChunkPos> searchResults, ChunkPos p, ClientMapData data, int borderLeft, int borderTop) {
+    private record Icon(int x, int y, int w, int h, int u, int v, int pw, int ph) {
+    }
+
+    private List<Icon> renderCityGrid(BatchQuadGuiRenderer batch, Set<ChunkPos> searchResults, ChunkPos p, ClientMapData data, int borderLeft, int borderTop) {
         Set<EntryPos> searchedChunks = data.getSearchedChunks();
+        List<Icon> icons = new ArrayList<>();
         for (int x = -MAP_DIM; x <= MAP_DIM; x++) {
             for (int z = -MAP_DIM; z <= MAP_DIM; z++) {
                 ChunkPos pos = new ChunkPos(p.x + x, p.z + z);
                 int biomeColor = data.getBiomeColor(Minecraft.getInstance().level, pos);
                 if (biomeColor != -1) {
                     // Render the biome color
-                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
+                    RenderHelper.drawBeveledBox(batch, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
                 }
                 int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
                 int startZ = borderTop + (z + MAP_DIM) * MAPCELL_SIZE;
@@ -120,7 +145,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     }
 
                     if (entry == MapPalette.CITY) {
-                        RenderHelper.drawBeveledBox(graphics, startX, startZ, startX + MAPCELL_SIZE, startZ + MAPCELL_SIZE, fullColor, fullColor, fullColor);
+                        RenderHelper.drawBeveledBox(batch, startX, startZ, startX + MAPCELL_SIZE, startZ + MAPCELL_SIZE, fullColor, fullColor, fullColor);
 
                         // Determine pattern offset
                         int patternOffsetX = x % 2;
@@ -136,37 +161,30 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                                     int z0 = startZ + j * step;
                                     int x1 = startX + (i + 1) * step;
                                     int z1 = startZ + (j + 1) * step;
-                                    RenderHelper.drawBeveledBox(graphics, x0, z0, x1, z1, 0xff000000, 0xff000000, 0xff000000);
+                                    RenderHelper.drawBeveledBox(batch, x0, z0, x1, z1, 0xff000000, 0xff000000, 0xff000000);
                                 }
                             }
                         }
                     } else {
-                        RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
+                        RenderHelper.drawBeveledBox(batch, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
                     }
                     if (entry.iconU() >= 0) {
                         // We have an icon
-                        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                        graphics.blit(ICONS, startX+2, startZ+2, MAPCELL_SIZE -4, MAPCELL_SIZE -4, entry.iconU(), entry.iconV(), 32, 32, 256, 256);
+                        icons.add(new Icon(startX+2, startZ+2, MAPCELL_SIZE-4, MAPCELL_SIZE-4, entry.iconU(), entry.iconV(), 32, 32));
                     }
-                }
-                if (x == 0 && z == 0) {
-                    // Get the angle from the player's rotation
-                    float angle = Minecraft.getInstance().player.getYRot() + 180;
-                    // Render the player as a white smaller dot
-                    RenderSystem.setShader(GameRenderer::getPositionTexShader);
-                    RenderHelper.drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, MAP_ICONS_LOCATION, 0, 0, 16, 16);
                 }
 
                 // If we want to show searched areas we render a darker overlay on top of the map parts that we didn't search
                 if (!searchedChunks.isEmpty() && !searchedChunks.contains(EntryPos.fromChunkPos(Minecraft.getInstance().level.dimension(), pos))) {
                     // Render a darker overlay
-                    RenderHelper.drawBeveledBox(graphics, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0x80000000, 0x80000000, 0x80000000);
+                    RenderHelper.drawBeveledBox(batch, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0x80000000, 0x80000000, 0x80000000);
                 }
             }
         }
+        return icons;
     }
 
-    private void renderDistantSearchResults(GuiGraphics graphics, Set<ChunkPos> searchResults, ChunkPos p, int borderLeft, int borderTop) {
+    private void renderDistantSearchResults(BatchQuadGuiRenderer batch, Set<ChunkPos> searchResults, ChunkPos p, int borderLeft, int borderTop) {
         for (ChunkPos pos : searchResults) {
             int dx = pos.x - p.x;
             int dz = pos.z - p.z;
@@ -194,7 +212,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
             int maxDistance = 80;
             int clamped = Math.max(0, Math.min(255, (int)(255 * (1 - (double)(distance - minDistance) / (maxDistance - minDistance)))));
             int color = 0xff000000 | (clamped << 16) | (clamped << 8) | clamped;
-            RenderHelper.drawBeveledBox(graphics, borderLeft + (bx + MAP_DIM) * MAPCELL_SIZE + 3, borderTop + (bz + MAP_DIM) * MAPCELL_SIZE + 3, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
+            RenderHelper.drawBeveledBox(batch, borderLeft + (bx + MAP_DIM) * MAPCELL_SIZE + 3, borderTop + (bz + MAP_DIM) * MAPCELL_SIZE + 3, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
         }
     }
 
