@@ -17,6 +17,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
@@ -25,14 +26,19 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.common.WorldWorkerManager;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
-public class ServerMapData extends AbstractWorldData<ServerMapData> {
+public class ServerMapData extends AbstractWorldData<ServerMapData> implements WorldWorkerManager.IWorker {
 
-    private final Map<EntryPos, MapChunk> mapChunks = new HashMap<>();
+    private final Map<EntryPos, MapChunk> mapChunks = Collections.synchronizedMap(new HashMap<>());
     private final static String RADAR_CACHE = "RadarCache";
+
+    private final Set<EntryPos> todo = Collections.synchronizedSet(new HashSet<>());
+
 
     private static final Codec<Pair<EntryPos, MapChunk>> PAIR_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntryPos.CODEC.fieldOf("entryPos").forGetter(Pair::getLeft),
@@ -64,6 +70,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> {
     }
 
     private ServerMapData() {
+        WorldWorkerManager.addWorker(this);
     }
 
     private ServerMapData(CompoundTag tag) {
@@ -71,6 +78,27 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> {
         if (result.result().isPresent()) {
             mapChunks.putAll(result.result().get());
         }
+        WorldWorkerManager.addWorker(this);
+    }
+
+    @Override
+    public boolean hasWork() {
+        return true;
+    }
+
+    @Override
+    public boolean doWork() {
+        synchronized (todo) {
+            if (!todo.isEmpty()) {
+                Iterator<EntryPos> iterator = todo.iterator();
+                EntryPos entry = iterator.next();
+                iterator.remove();
+                MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+                Level level = server.getLevel(entry.level());
+                calculateMapChunk(level, entry);
+            }
+        }
+        return false;
     }
 
     @Override
@@ -101,7 +129,8 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> {
     private MapChunk getMapChunk(Level level, EntryPos pos) {
         MapChunk mapChunk = mapChunks.get(pos);
         if (mapChunk == null) {
-            mapChunk = calculateMapChunk(level, pos);
+            todo.add(pos);
+//            mapChunk = calculateMapChunk(level, pos);
         }
         return mapChunk;
     }
@@ -146,9 +175,9 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> {
                 Set<ChunkPos> result = new HashSet<>();
                 // @todo use a queue?
                 EntryPos pos = search.searchTodo.iterator().next();
-                search.searchTodo.remove(pos);
                 MapChunk mapChunk = getMapChunk(overworld, pos);
                 if (mapChunk != null) {
+                    search.searchTodo.remove(pos);
                     findCategory(level, mapChunk, search.searchString(), result);
                     ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.getKey());
                     Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result, Set.of(pos)), player);
