@@ -10,6 +10,7 @@ import mcjty.lostradar.compat.LostCitiesCompat;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketReturnMapChunkToClient;
 import mcjty.lostradar.network.PacketReturnSearchResultsToClient;
+import mcjty.lostradar.setup.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
@@ -117,6 +118,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         }
         MapChunk mapChunk = mapChunks.get(pos);
         if (mapChunk == null) {
+            todo.remove(pos);
             mapChunk = calculateMapChunk(level, pos);
         }
         if (mapChunk != null) {
@@ -145,7 +147,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>());
         // Add all the chunks in a 10x10 square around the player starting from the player
         // position and going outwards
-        for (int radius = 0 ; radius <= 10 ; radius++) {
+        for (int radius = 0; radius <= Config.SEARCH_RADIUS.get(); radius++) {
             if (radius == 0) {
                 search.searchTodo().add(pos);
             } else {
@@ -173,7 +175,6 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
             if (!search.searchTodo().isEmpty()) {
                 ServerLevel level = overworld.getServer().getLevel(search.level());
                 Set<ChunkPos> result = new HashSet<>();
-                // @todo use a queue?
                 EntryPos pos = search.searchTodo.iterator().next();
                 MapChunk mapChunk = getMapChunk(overworld, pos);
                 if (mapChunk != null) {

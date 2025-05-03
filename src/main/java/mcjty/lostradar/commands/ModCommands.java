@@ -12,10 +12,10 @@ public class ModCommands {
         LiteralCommandNode<CommandSourceStack> commands = dispatcher.register(
                 Commands.literal(LostRadar.MODID)
                         .then(CommandLearn.register(dispatcher))
-                        .then(CommandList.register(dispatcher))
+                        .then(CommandClear.register(dispatcher))
         );
 
-        dispatcher.register(Commands.literal("ls").redirect(commands));
+        dispatcher.register(Commands.literal("radar").redirect(commands));
     }
 
 }

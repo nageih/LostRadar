@@ -6,10 +6,7 @@ import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.*;
 import mcjty.lib.gui.widgets.*;
 import mcjty.lostradar.LostRadar;
-import mcjty.lostradar.data.ClientMapData;
-import mcjty.lostradar.data.EntryPos;
-import mcjty.lostradar.data.MapPalette;
-import mcjty.lostradar.data.PaletteCache;
+import mcjty.lostradar.data.*;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketStartSearch;
 import net.minecraft.client.Minecraft;
@@ -23,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static mcjty.lib.gui.widgets.Widgets.positional;
 
@@ -216,22 +214,32 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         }
     }
 
+    public static void refresh() {
+        if (Minecraft.getInstance().screen instanceof GuiRadar radar) {
+            radar.populateCategoryList();
+        }
+    }
+
     private void populateCategoryList() {
         ClientMapData data = ClientMapData.getData();
         String searchString = data.getSearchString();
-        int selected = categoryList.getSelected();
+        AtomicInteger selected = new AtomicInteger(categoryList.getSelected());
         categoryList.removeChildren();
         PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(Minecraft.getInstance().level));
-        for (MapPalette.PaletteEntry category : palette.getPalette().palette()) {
-            categoryList.children(makeLine(category));
-            if (!searchString.isEmpty() && category.name().equals(searchString)) {
-                selected = categoryList.getChildren().size() - 1;
+        PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(Minecraft.getInstance().player).ifPresent(handler -> {
+            for (MapPalette.PaletteEntry category : palette.getPalette().palette()) {
+                if (handler.getKnownCategories().contains(category.name())) {
+                    categoryList.children(makeLine(category));
+                    if (!searchString.isEmpty() && category.name().equals(searchString)) {
+                        selected.set(categoryList.getChildren().size() - 1);
+                    }
+                }
             }
-        }
-        categoryList.selected(selected);
+        });
+        categoryList.selected(selected.get());
     }
 
-    private Widget<Label>  makeLine(MapPalette.PaletteEntry category) {
+    private Widget<Label> makeLine(MapPalette.PaletteEntry category) {
         return Widgets.label(category.name());
     }
 
@@ -241,10 +249,6 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         scanButton.enabled(scanEnabled);
         drawWindow(graphics);
         renderMap(graphics);
-    }
-
-    public static void open() {
-        Minecraft.getInstance().setScreen(new GuiRadar());
     }
 
     @Override
@@ -284,5 +288,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         WindowManager manager = getWindow().getWindowManager();
         manager.mouseScrolled(x, y, amount);
         return true;
+    }
+
+    public static void open() {
+        Minecraft.getInstance().setScreen(new GuiRadar());
     }
 }

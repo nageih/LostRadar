@@ -1,6 +1,9 @@
 package mcjty.lostradar.radar;
 
 import mcjty.lostradar.LostRadar;
+import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.network.Messages;
+import mcjty.lostradar.network.PacketKnowledgeToPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -21,6 +24,11 @@ public class RadarItem extends Item {
     public InteractionResultHolder<ItemStack> use(@Nonnull Level world, @Nonnull Player player, @Nonnull InteractionHand hand) {
         if (world.isClientSide) {
             GuiRadar.open();
+        } else {
+            // Send knowledge data to the client
+            PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(player).ifPresent(handler -> {
+                Messages.sendToPlayer(new PacketKnowledgeToPlayer(handler.getKnownCategories()), player);
+            });
         }
         return super.use(world, player, hand);
     }

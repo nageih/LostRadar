@@ -77,4 +77,8 @@ public class PlayerMapKnowledge {
             }
         }
     }
+
+    public void clearKnowledge() {
+        knownCategories.clear();
+    }
 }

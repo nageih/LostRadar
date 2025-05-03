@@ -20,9 +20,10 @@ public class Messages {
                 .optional();
 
         registrar.play(PacketRequestMapChunk.class, PacketRequestMapChunk::create, handler -> handler.client(PacketRequestMapChunk::handle));
-        registrar.play(PacketReturnMapChunkToClient.class, PacketReturnMapChunkToClient::create, handler -> handler.server(PacketReturnMapChunkToClient::handle));
+        registrar.play(PacketReturnMapChunkToClient.class, PacketReturnMapChunkToClient::create, handler -> handler.client(PacketReturnMapChunkToClient::handle));
+        registrar.play(PacketKnowledgeToPlayer.class, PacketKnowledgeToPlayer::create, handler -> handler.client(PacketKnowledgeToPlayer::handle));
 
-        registrar.play(PacketStartSearch.class, PacketStartSearch::create, handler -> handler.client(PacketStartSearch::handle));
+        registrar.play(PacketStartSearch.class, PacketStartSearch::create, handler -> handler.server(PacketStartSearch::handle));
         registrar.play(PacketReturnSearchResultsToClient.class, PacketReturnSearchResultsToClient::create, handler -> handler.server(PacketReturnSearchResultsToClient::handle));
     }
 
