@@ -1,0 +1,10 @@
+{
+  "lostradar.city": "City",
+  "lostradar.highway": "Highway",
+  "lostradar.buildings": "Building",
+  "lostradar.center": "City Center",
+  "lostradar.library": "Town library",
+  "lostradar.shopping": "Shopping center",
+  "lostradar.default": "Unknown building",
+  "lostradar.chunk": "Coordinate %s"
+}

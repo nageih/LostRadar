@@ -5,6 +5,7 @@ import mcjty.lib.client.BatchQuadGuiRenderer;
 import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.*;
 import mcjty.lib.gui.widgets.*;
+import mcjty.lib.varia.ComponentFactory;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.*;
 import mcjty.lostradar.network.Messages;
@@ -12,8 +13,10 @@ import mcjty.lostradar.network.PacketStartSearch;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -37,6 +40,8 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
     private WidgetList categoryList;
     private Button scanButton;
+
+    private final List<Pair<Rect2i, ChunkPos>> borderCoordinates = new ArrayList<>();
 
     public GuiRadar() {
         super(xSize, ySize, ManualEntry.EMPTY);
@@ -183,6 +188,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     }
 
     private void renderDistantSearchResults(BatchQuadGuiRenderer batch, Set<ChunkPos> searchResults, ChunkPos p, int borderLeft, int borderTop) {
+        borderCoordinates.clear();
         for (ChunkPos pos : searchResults) {
             int dx = pos.x - p.x;
             int dz = pos.z - p.z;
@@ -210,7 +216,11 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
             int maxDistance = 80;
             int clamped = Math.max(0, Math.min(255, (int)(255 * (1 - (double)(distance - minDistance) / (maxDistance - minDistance)))));
             int color = 0xff000000 | (clamped << 16) | (clamped << 8) | clamped;
-            RenderHelper.drawBeveledBox(batch, borderLeft + (bx + MAP_DIM) * MAPCELL_SIZE + 3, borderTop + (bz + MAP_DIM) * MAPCELL_SIZE + 3, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
+            int x1 = borderLeft + (bx + MAP_DIM) * MAPCELL_SIZE + 3;
+            int y1 = borderTop + (bz + MAP_DIM) * MAPCELL_SIZE + 3;
+            RenderHelper.drawBeveledBox(batch, x1, y1, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
+            // Store the coordinates for later use
+            borderCoordinates.add(Pair.of(new Rect2i(x1, y1, MAPCELL_SIZE - 6, MAPCELL_SIZE - 6), pos));
         }
     }
 
@@ -244,11 +254,44 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     }
 
     @Override
-    protected void renderInternal(@Nonnull GuiGraphics graphics, int xSize_lo, int ySize_lo, float par3) {
+    protected void renderInternal(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         boolean scanEnabled = categoryList.getSelected() >= 0;
         scanButton.enabled(scanEnabled);
         drawWindow(graphics);
         renderMap(graphics);
+        renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private void renderTooltip(@Nonnull GuiGraphics graphics, int mouseX, int mouseY) {
+        int borderLeft = this.guiLeft + 12;
+        int borderTop = this.guiTop + 12;
+
+        ClientMapData data = ClientMapData.getData();
+
+        // Check that the mouse position is on the map
+        if (mouseX < borderLeft || mouseX > borderLeft + MAPCELL_SIZE * (MAP_DIM * 2 + 1) || mouseY < borderTop || mouseY > borderTop + MAPCELL_SIZE * (MAP_DIM * 2 + 1)) {
+            // Mouse is outside the map area. Check if it is on the border
+            for (Pair<Rect2i, ChunkPos> pair : borderCoordinates) {
+                Rect2i rect = pair.getKey();
+                ChunkPos pos = pair.getValue();
+                // Check if mouseX and mouseY are within the rectangle
+                if (rect.contains(mouseX, mouseY)) {
+                    String posString = String.format("%d, %d", pos.getMiddleBlockX(), pos.getMiddleBlockZ());
+                    graphics.renderTooltip(Minecraft.getInstance().font, ComponentFactory.translatable("lostradar.chunk", posString), mouseX - guiLeft, mouseY - guiTop);
+                    break;
+                }
+            }
+        } else {
+            // Find the palette entry at the mouse position (x, y)
+            ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
+            ChunkPos pos = new ChunkPos(
+                    p.x + (mouseX - borderLeft) / MAPCELL_SIZE - MAP_DIM,
+                    p.z + (mouseY - borderTop) / MAPCELL_SIZE - MAP_DIM);
+            MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
+            if (entry != null) {
+                graphics.renderTooltip(Minecraft.getInstance().font, ComponentFactory.translatable(entry.translatableKey()), mouseX - guiLeft, mouseY - guiTop);
+            }
+        }
     }
 
     @Override
