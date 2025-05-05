@@ -2,6 +2,7 @@ package mcjty.lostradar.radar;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import mcjty.lib.client.BatchQuadGuiRenderer;
+import mcjty.lib.client.GuiTools;
 import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.*;
 import mcjty.lib.gui.widgets.*;
@@ -14,15 +15,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static mcjty.lib.gui.widgets.Widgets.positional;
@@ -262,11 +261,21 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         renderTooltip(graphics, mouseX, mouseY);
     }
 
-    private void renderTooltip(@Nonnull GuiGraphics graphics, int mouseX, int mouseY) {
+    private void renderTooltip(@Nonnull GuiGraphics graphics, int xxmouseX, int yymouseY) {
+        int mouseX = GuiTools.getRelativeX(this);
+        int mouseY = GuiTools.getRelativeY(this);
+
         int borderLeft = this.guiLeft + 12;
         int borderTop = this.guiTop + 12;
 
         ClientMapData data = ClientMapData.getData();
+
+        ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
+        int tooltipX = mouseX - 20;
+        int tooltipY = mouseY - 3;
+        if (tooltipY < 14) {
+            tooltipY = mouseY + 20;
+        }
 
         // Check that the mouse position is on the map
         if (mouseX < borderLeft || mouseX > borderLeft + MAPCELL_SIZE * (MAP_DIM * 2 + 1) || mouseY < borderTop || mouseY > borderTop + MAPCELL_SIZE * (MAP_DIM * 2 + 1)) {
@@ -277,19 +286,22 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                 // Check if mouseX and mouseY are within the rectangle
                 if (rect.contains(mouseX, mouseY)) {
                     String posString = String.format("%d, %d", pos.getMiddleBlockX(), pos.getMiddleBlockZ());
-                    graphics.renderTooltip(Minecraft.getInstance().font, ComponentFactory.translatable("lostradar.chunk", posString), mouseX - guiLeft, mouseY - guiTop);
+                    String distanceString = String.format("%d", Math.max(Math.abs(pos.x - p.x), Math.abs(pos.z - p.z)) * 16);
+                    List<Component> components = List.of(ComponentFactory.translatable("lostradar.chunk.pos", posString),
+                            ComponentFactory.translatable("lostradar.chunk.dist", distanceString));
+                    graphics.renderTooltip(Minecraft.getInstance().font, components, Optional.empty(),
+                            tooltipX, tooltipY);
                     break;
                 }
             }
         } else {
             // Find the palette entry at the mouse position (x, y)
-            ChunkPos p = new ChunkPos(Minecraft.getInstance().player.blockPosition());
             ChunkPos pos = new ChunkPos(
                     p.x + (mouseX - borderLeft) / MAPCELL_SIZE - MAP_DIM,
                     p.z + (mouseY - borderTop) / MAPCELL_SIZE - MAP_DIM);
             MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
             if (entry != null) {
-                graphics.renderTooltip(Minecraft.getInstance().font, ComponentFactory.translatable(entry.translatableKey()), mouseX - guiLeft, mouseY - guiTop);
+                graphics.renderTooltip(Minecraft.getInstance().font, ComponentFactory.translatable(entry.translatableKey()), tooltipX, tooltipY);
             }
         }
     }

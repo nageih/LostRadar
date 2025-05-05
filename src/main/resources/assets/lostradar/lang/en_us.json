@@ -6,5 +6,6 @@
   "lostradar.library": "Town library",
   "lostradar.shopping": "Shopping center",
   "lostradar.default": "Unknown building",
-  "lostradar.chunk": "Coordinate %s"
+  "lostradar.chunk.pos": "Coordinate %s",
+  "lostradar.chunk.dist": "Distance %s"
 }
