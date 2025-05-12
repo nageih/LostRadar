@@ -11,6 +11,7 @@ import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.*;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketStartSearch;
+import mcjty.lostradar.setup.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -123,6 +124,14 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
     private List<Icon> renderCityGrid(BatchQuadGuiRenderer batch, Set<ChunkPos> searchResults, ChunkPos p, ClientMapData data, int borderLeft, int borderTop) {
         Set<EntryPos> searchedChunks = data.getSearchedChunks();
+        // Based on the current time calculate an rgb color between Config.HIGHLIGHT_x1 and Config.HIGHLIGHT_x2
+        // Fluctuate back and forth between the two colors in a 2 second cycle
+        float time = System.currentTimeMillis() % 2000 / 2000f;
+        int r = (int) (Config.HILIGHT_R1.get() + (Config.HILIGHT_R2.get() - Config.HILIGHT_R1.get()) * time);
+        int g = (int) (Config.HILIGHT_G1.get() + (Config.HILIGHT_G2.get() - Config.HILIGHT_G1.get()) * time);
+        int b = (int) (Config.HILIGHT_B1.get() + (Config.HILIGHT_B2.get() - Config.HILIGHT_B1.get()) * time);
+        int highlightColor = 0xff000000 | (r << 16) | (g << 8) | b;
+
         List<Icon> icons = new ArrayList<>();
         for (int x = -MAP_DIM; x <= MAP_DIM; x++) {
             for (int z = -MAP_DIM; z <= MAP_DIM; z++) {
@@ -142,7 +151,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     int borderColor = 0xff333333;
                     if (searchResults.contains(pos)) {
                         // This is a search result
-                        borderColor = 0xffffffff;
+                        borderColor = highlightColor;
                         searchResults.remove(pos);
                     }
 
@@ -254,8 +263,15 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
     @Override
     protected void renderInternal(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        ClientMapData data = ClientMapData.getData();
         boolean scanEnabled = categoryList.getSelected() >= 0;
         scanButton.enabled(scanEnabled);
+        int progress = data.getSearchProgress();
+        if (progress >= 100) {
+            scanButton.text("Scan");
+        } else {
+            scanButton.text(progress + "%");
+        }
         drawWindow(graphics);
         renderMap(graphics);
         renderTooltip(graphics, mouseX, mouseY);

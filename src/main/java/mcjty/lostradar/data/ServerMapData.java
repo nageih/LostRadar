@@ -62,7 +62,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         return getData(world, ServerMapData::new, ServerMapData::new, RADAR_CACHE);
     }
 
-    private record PlayerSearch(ResourceKey<Level> level, String searchString, Set<EntryPos> searchTodo) {
+    private record PlayerSearch(ResourceKey<Level> level, String searchString, Set<EntryPos> searchTodo, int totalEntries) {
     }
     private Map<UUID, PlayerSearch> searches = new HashMap<>();
 
@@ -144,7 +144,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         }
         Level level = player.level();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
-        PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>());
+        PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>(), (Config.SEARCH_RADIUS.get() * 2 + 1) * (Config.SEARCH_RADIUS.get() * 2 + 1));
         // Add all the chunks in a 10x10 square around the player starting from the player
         // position and going outwards
         for (int radius = 0; radius <= Config.SEARCH_RADIUS.get(); radius++) {
@@ -181,7 +181,8 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
                     search.searchTodo.remove(pos);
                     findCategory(level, mapChunk, search.searchString(), result);
                     ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.getKey());
-                    Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result, Set.of(pos)), player);
+                    int progressPercentage = 100 - (search.searchTodo().size() * 100 / search.totalEntries);
+                    Messages.sendToPlayer(new PacketReturnSearchResultsToClient(result, Set.of(pos), progressPercentage), player);
                 }
             } else {
                 searchesToRemove.add(entry.getKey());

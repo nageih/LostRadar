@@ -23,6 +23,7 @@ public class ClientMapData {
     private static final ClientMapData INSTANCE = new ClientMapData();
 
     private String searchString = "";
+    private int searchProgress = 100;
 
     @Nonnull
     public static ClientMapData getData() {
@@ -38,11 +39,21 @@ public class ClientMapData {
         searchResults.clear();
         searchedChunks.clear();
         searchString = "";
+        searchProgress = 100;
     }
 
     public void clearSearchResults() {
         searchResults.clear();
         searchedChunks.clear();
+        searchProgress = 100;
+    }
+
+    public void setSearchProgress(int progress) {
+        this.searchProgress = progress;
+    }
+
+    public int getSearchProgress() {
+        return searchProgress;
     }
 
     public void addSearchResults(Set<ChunkPos> positions, Set<EntryPos> chunks) {
