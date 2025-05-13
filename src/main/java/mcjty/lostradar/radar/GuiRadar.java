@@ -12,6 +12,7 @@ import mcjty.lostradar.data.*;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketStartSearch;
 import mcjty.lostradar.setup.Config;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -68,8 +69,15 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(Minecraft.getInstance().level));
                         MapPalette.PaletteEntry entry = palette.getPalette().palette().get(selected);
                         String searchText = entry.name();
+                        if (entry.usage() > 0) {
+                            int extracted = Registration.RADAR.get().extractEnergyNoMax(Minecraft.getInstance().player.getMainHandItem(), entry.usage(), true);
+                            if (extracted < entry.usage()) {
+                                Minecraft.getInstance().player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", entry.usage()));
+                                return;
+                            }
+                        }
                         if (!searchText.isEmpty()) {
-                            Messages.sendToServer(new PacketStartSearch(searchText));
+                            Messages.sendToServer(new PacketStartSearch(searchText, entry.usage()));
                         }
                         ClientMapData.getData().setSearchString(searchText);
                         ClientMapData.getData().clearSearchResults();
@@ -78,7 +86,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         Button clearButton = Widgets.button(238, ySize - 22, 93, 15, "Clear").event(() -> {
             ClientMapData.getData().clearSearchResults();
             ClientMapData.getData().setSearchString("");
-            Messages.sendToServer(new PacketStartSearch(""));
+            Messages.sendToServer(new PacketStartSearch("", 0));
             categoryList.selected(-1);
         });
         toplevel.children(categoryList, scanButton, clearButton);

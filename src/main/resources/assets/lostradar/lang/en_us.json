@@ -7,5 +7,6 @@
   "lostradar.shopping": "Shopping center",
   "lostradar.default": "Unknown building",
   "lostradar.chunk.pos": "Coordinate %s",
-  "lostradar.chunk.dist": "Distance %s"
+  "lostradar.chunk.dist": "Distance %s",
+  "lostradar.notenoughenergy": "Not enough energy to perform this search!"
 }

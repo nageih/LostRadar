@@ -6,13 +6,21 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.api.ILostChunkInfo;
 import mcjty.lostcities.api.ILostCityInformation;
 import mcjty.lostradar.compat.LostCitiesCompat;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 
 import java.util.ArrayList;
@@ -59,11 +67,32 @@ public class PlayerMapKnowledge {
         event.register(PlayerMapKnowledge.class);
     }
 
+    private static final Component DEFAULT_NAME = Component.literal("@");
+    private static final CommandSource EMPTY = new CommandSource() {
+        @Override
+        public void sendSystemMessage(Component component) {
+        }
+
+        @Override
+        public boolean acceptsSuccess() {
+            return false;
+        }
+
+        @Override
+        public boolean acceptsFailure() {
+            return false;
+        }
+
+        @Override
+        public boolean shouldInformAdmins() {
+            return false;
+        }
+    };
+
     public void tick(ServerPlayer player) {
         ILostCityInformation lostInfo = LostCitiesCompat.lostCities.getLostInfo(player.level());
         if (lostInfo != null) {
             ChunkPos pos = player.chunkPosition();
-            ResourceKey<Level> dimension = player.level().dimension();
             ILostChunkInfo chunkInfo = lostInfo.getChunkInfo(pos.x, pos.z);
             if (chunkInfo != null) {
                 PaletteCache cache = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(player.level()));
@@ -71,7 +100,17 @@ public class PlayerMapKnowledge {
                 if (buildingId != null) {
                     MapPalette.PaletteEntry entry = cache.getEntryForBuilding(buildingId);
                     if (entry != null) {
-                        knownCategories.add(entry.name());
+                        if (knownCategories.add(entry.name())) {
+                            if (!entry.commands().isEmpty()) {
+                                MinecraftServer server = player.server;
+                                CommandSourceStack stack = new CommandSourceStack(EMPTY, Vec3.atCenterOf(player.blockPosition()), Vec2.ZERO, (ServerLevel) player.level(), 2,
+                                        DEFAULT_NAME.getString(), DEFAULT_NAME, server, player);
+                                for (String command : entry.commands()) {
+                                    server.getCommands().performPrefixedCommand(stack, command);
+                                }
+
+                            }
+                        }
                     }
                 }
             }

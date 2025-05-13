@@ -6,7 +6,12 @@ import net.minecraftforge.fml.config.ModConfig;
 
 public class Config {
 
+    // Server side
     public static ForgeConfigSpec.IntValue SEARCH_RADIUS;
+    public static ForgeConfigSpec.IntValue RADAR_MAXENERGY;
+    public static ForgeConfigSpec.IntValue RADAR_RECEIVEPERTICK;
+
+    // Client side
     public static ForgeConfigSpec.IntValue HILIGHT_R1;
     public static ForgeConfigSpec.IntValue HILIGHT_G1;
     public static ForgeConfigSpec.IntValue HILIGHT_B1;
@@ -27,6 +32,12 @@ public class Config {
         SEARCH_RADIUS = builder
                 .comment("The radius of the search area for the radar. This is measured in multiples of 8 chunks")
                 .defineInRange("searchRadius", 10, 1, 10000);
+        RADAR_MAXENERGY = builder
+                .comment("Maximum RF storage that the radar item can hold")
+                .defineInRange("radarMaxRF", 20000, 0, Integer.MAX_VALUE);
+        RADAR_RECEIVEPERTICK = builder
+                .comment("RF per tick that the the radar item can receive")
+                .defineInRange("radarRFPerTick", 100, 0, Integer.MAX_VALUE);
 
         builder.pop();
 
