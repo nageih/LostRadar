@@ -126,7 +126,10 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         Set<EntryPos> searchedChunks = data.getSearchedChunks();
         // Based on the current time calculate an rgb color between Config.HIGHLIGHT_x1 and Config.HIGHLIGHT_x2
         // Fluctuate back and forth between the two colors in a 2 second cycle
-        float time = System.currentTimeMillis() % 2000 / 2000f;
+        float time = System.currentTimeMillis() % 4000 / 2000f;
+        if (time > 1) {
+            time = 2 - time;
+        }
         int r = (int) (Config.HILIGHT_R1.get() + (Config.HILIGHT_R2.get() - Config.HILIGHT_R1.get()) * time);
         int g = (int) (Config.HILIGHT_G1.get() + (Config.HILIGHT_G2.get() - Config.HILIGHT_G1.get()) * time);
         int b = (int) (Config.HILIGHT_B1.get() + (Config.HILIGHT_B2.get() - Config.HILIGHT_B1.get()) * time);
