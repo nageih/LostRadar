@@ -24,7 +24,7 @@
       "color": 255,
       "translatableKey": "lostradar.center",
       "usage": 1,
-      "commands": ["tellraw @p 'You discovered the center!'"],
+      "commands": ["tellraw @p \"You discovered the center!\""],
       "u": 128,
       "v": 0,
       "buildings": [
@@ -39,7 +39,7 @@
       "color": 16776960,
       "translatableKey": "lostradar.library",
       "usage": 1,
-      "commands": ["tellraw @p 'You discovered the library!'"],
+      "commands": ["tellraw @p \"You discovered the library!\""],
       "u": 0,
       "v": 32,
       "buildings": [
@@ -54,7 +54,7 @@
       "color": 16711920,
       "translatableKey": "lostradar.shopping",
       "usage": 1,
-      "commands": ["tellraw @p 'You discovered the shopping mall!'"],
+      "commands": ["tellraw @p \"You discovered the shopping mall!\""],
       "u": 32,
       "v": 32,
       "buildings": [

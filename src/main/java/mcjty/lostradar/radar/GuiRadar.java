@@ -143,6 +143,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int b = (int) (Config.HILIGHT_B1.get() + (Config.HILIGHT_B2.get() - Config.HILIGHT_B1.get()) * time);
         int highlightColor = 0xff000000 | (r << 16) | (g << 8) | b;
 
+        int energyStored = Registration.RADAR.get().getEnergyStored(Minecraft.getInstance().player.getMainHandItem());
+        boolean hasEnergy = energyStored >= Config.RADAR_MINENERGY_FOR_MAP.get();
+
         List<Icon> icons = new ArrayList<>();
         for (int x = -MAP_DIM; x <= MAP_DIM; x++) {
             for (int z = -MAP_DIM; z <= MAP_DIM; z++) {
@@ -150,6 +153,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                 int biomeColor = data.getBiomeColor(Minecraft.getInstance().level, pos);
                 if (biomeColor != -1) {
                     // Render the biome color
+                    if (!hasEnergy) {
+                        biomeColor = 0xff777777;
+                    }
                     RenderHelper.drawBeveledBox(batch, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
                 }
                 int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
@@ -158,6 +164,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                 if (entry != null) {
                     // Render the color
                     int color = entry.color();
+                    if (!hasEnergy) {
+                        color = 0x444444;
+                    }
                     int fullColor = 0xff000000 | (color & 0x00ffffff);
                     int borderColor = 0xff333333;
                     if (searchResults.contains(pos)) {
@@ -286,6 +295,12 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         drawWindow(graphics);
         renderMap(graphics);
         renderTooltip(graphics, mouseX, mouseY);
+
+        int energyStored = Registration.RADAR.get().getEnergyStored(Minecraft.getInstance().player.getMainHandItem());
+        boolean hasEnergy = energyStored >= Config.RADAR_MINENERGY_FOR_MAP.get();
+        if (!hasEnergy) {
+            graphics.drawString(Minecraft.getInstance().font, ComponentFactory.translatable("lostradar.energylow"), this.guiLeft + 12, this.guiTop + 12, 0xffff0000);
+        }
     }
 
     private void renderTooltip(@Nonnull GuiGraphics graphics, int xxmouseX, int yymouseY) {

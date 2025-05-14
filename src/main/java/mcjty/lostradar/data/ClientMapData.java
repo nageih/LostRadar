@@ -101,7 +101,6 @@ public class ClientMapData {
                 // Already requested, do nothing
                 return null;
             }
-            System.out.println("CLIENT: request " + entryPos);
             Messages.sendToServer(new PacketRequestMapChunk(entryPos));
             requestedChunks.add(entryPos);
             return null;

@@ -10,6 +10,7 @@ public class Config {
     public static ForgeConfigSpec.IntValue SEARCH_RADIUS;
     public static ForgeConfigSpec.IntValue RADAR_MAXENERGY;
     public static ForgeConfigSpec.IntValue RADAR_RECEIVEPERTICK;
+    public static ForgeConfigSpec.IntValue RADAR_MINENERGY_FOR_MAP;
 
     // Client side
     public static ForgeConfigSpec.IntValue HILIGHT_R1;
@@ -38,6 +39,9 @@ public class Config {
         RADAR_RECEIVEPERTICK = builder
                 .comment("RF per tick that the the radar item can receive")
                 .defineInRange("radarRFPerTick", 100, 0, Integer.MAX_VALUE);
+        RADAR_MINENERGY_FOR_MAP = builder
+                .comment("Minimum RF that the radar item must have to be able to show the map fully")
+                .defineInRange("radarMinRFForMap", 10, 0, Integer.MAX_VALUE);
 
         builder.pop();
 

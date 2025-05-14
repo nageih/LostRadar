@@ -48,8 +48,8 @@ public class RadarItem extends Item implements IEnergyItem {
     }
 
     @Override
-    public boolean isBarVisible(ItemStack pStack) {
-        return true;
+    public boolean isBarVisible(ItemStack stack) {
+        return stack.getTag() != null && stack.getTag().contains("Energy");
     }
 
     @Override
