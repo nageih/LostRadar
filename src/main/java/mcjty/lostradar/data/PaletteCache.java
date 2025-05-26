@@ -11,6 +11,7 @@ public class PaletteCache {
     private final MapPalette palette;
     private final Map<ResourceLocation, MapPalette.PaletteEntry> entryForBuilding;
     private final Map<ResourceLocation, Integer> indexForBuilding;
+    private final Map<String, MapPalette.PaletteEntry> entryByCategory;
     private int defaultEntry = -1;
 
     private static PaletteCache paletteCache = null;
@@ -31,6 +32,7 @@ public class PaletteCache {
         this.entryForBuilding = palette.palette().stream()
                 .flatMap(entry -> entry.buildings().stream().map(building -> Map.entry(building, entry)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.entryByCategory = new HashMap<>();
         this.indexForBuilding = new HashMap<>();
         for (int i = 0; i < palette.palette().size(); i++) {
             MapPalette.PaletteEntry entry = palette.palette().get(i);
@@ -40,6 +42,9 @@ public class PaletteCache {
                 for (ResourceLocation building : entry.buildings()) {
                     indexForBuilding.put(building, i);
                 }
+            }
+            if (entry.name() != null) {
+                entryByCategory.put(entry.name(), entry);
             }
         }
     }
@@ -51,6 +56,8 @@ public class PaletteCache {
     public MapPalette getPalette() {
         return palette;
     }
+    
+    
 
     public MapPalette.PaletteEntry getEntryForIndex(int index) {
         if (index < 0 || index >= palette.palette().size()) {
@@ -62,6 +69,11 @@ public class PaletteCache {
     @Nullable
     public MapPalette.PaletteEntry getEntryForBuilding(ResourceLocation building) {
         return entryForBuilding.get(building);
+    }
+
+    @Nullable
+    public MapPalette.PaletteEntry getEntryByCategory(String category) {
+        return entryByCategory.get(category);
     }
 
     public int getIndexForBuilding(ResourceLocation building) {

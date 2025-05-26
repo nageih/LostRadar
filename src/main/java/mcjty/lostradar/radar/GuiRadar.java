@@ -30,7 +30,7 @@ import static mcjty.lib.gui.widgets.Widgets.positional;
 
 public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
-    private static final int xSize = 340;
+    private static final int xSize = 380;
     private static final int ySize = 236;
 
     private static final int MAPCELL_SIZE = 10;
@@ -41,6 +41,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
     private WidgetList categoryList;
     private Button scanButton;
+    private final List<String> categories = new ArrayList<>();
 
     private final List<Pair<Rect2i, ChunkPos>> borderCoordinates = new ArrayList<>();
 
@@ -61,14 +62,14 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int l = (this.height - ySize) / 2;
 
         Panel toplevel = positional().filledRectThickness(2);
-        categoryList = Widgets.list(238, 12, 93, ySize - 53);
-        scanButton = Widgets.button(238, ySize - 40, 93, 15, "Scan")
+        categoryList = Widgets.list(238, 12, 133, ySize - 53);
+        scanButton = Widgets.button(238, ySize - 40, 133, 15, "Scan")
                 .event(() -> {
                     int selected = categoryList.getSelected();
                     if (selected >= 0) {
                         PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(Minecraft.getInstance().level));
-                        MapPalette.PaletteEntry entry = palette.getPalette().palette().get(selected);
-                        String searchText = entry.name();
+                        String category = categories.get(selected);
+                        MapPalette.PaletteEntry entry = palette.getEntryByCategory(category);
                         if (entry.usage() > 0) {
                             int extracted = Registration.RADAR.get().extractEnergyNoMax(Minecraft.getInstance().player.getMainHandItem(), entry.usage(), true);
                             if (extracted < entry.usage()) {
@@ -76,14 +77,14 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                                 return;
                             }
                         }
-                        if (!searchText.isEmpty()) {
-                            Messages.sendToServer(new PacketStartSearch(searchText, entry.usage()));
+                        if (!category.isEmpty()) {
+                            Messages.sendToServer(new PacketStartSearch(category, entry.usage()));
                         }
-                        ClientMapData.getData().setSearchString(searchText);
+                        ClientMapData.getData().setSearchString(category);
                         ClientMapData.getData().clearSearchResults();
                     }
                 });
-        Button clearButton = Widgets.button(238, ySize - 22, 93, 15, "Clear").event(() -> {
+        Button clearButton = Widgets.button(238, ySize - 22, 133, 15, "Clear").event(() -> {
             ClientMapData.getData().clearSearchResults();
             ClientMapData.getData().setSearchString("");
             Messages.sendToServer(new PacketStartSearch("", 0));
@@ -263,16 +264,19 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         String searchString = data.getSearchString();
         AtomicInteger selected = new AtomicInteger(categoryList.getSelected());
         categoryList.removeChildren();
+        categories.clear();
         PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(Minecraft.getInstance().level));
         PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(Minecraft.getInstance().player).ifPresent(handler -> {
             for (MapPalette.PaletteEntry category : palette.getPalette().palette()) {
                 if (handler.getKnownCategories().contains(category.name())) {
                     categoryList.children(makeLine(category));
+                    categories.add(category.name());
                     if (!searchString.isEmpty() && category.name().equals(searchString)) {
                         selected.set(categoryList.getChildren().size() - 1);
                     }
                 }
             }
+
         });
         categoryList.selected(selected.get());
     }
