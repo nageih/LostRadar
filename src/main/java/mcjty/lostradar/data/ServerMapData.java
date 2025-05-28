@@ -8,6 +8,7 @@ import mcjty.lostcities.api.ILostChunkInfo;
 import mcjty.lostcities.api.ILostCityInformation;
 import mcjty.lostradar.compat.LostCitiesCompat;
 import mcjty.lostradar.network.Messages;
+import mcjty.lostradar.network.PacketPauseStateToClient;
 import mcjty.lostradar.network.PacketReturnMapChunkToClient;
 import mcjty.lostradar.network.PacketReturnSearchResultsToClient;
 import mcjty.lostradar.setup.Config;
@@ -62,7 +63,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         return getData(world, ServerMapData::new, ServerMapData::new, RADAR_CACHE);
     }
 
-    private record PlayerSearch(ResourceKey<Level> level, String searchString, Set<EntryPos> searchTodo, int totalEntries) {
+    private record PlayerSearch(ResourceKey<Level> level, String searchString, Set<EntryPos> searchTodo, int totalEntries, boolean paused) {
     }
     private Map<UUID, PlayerSearch> searches = new HashMap<>();
 
@@ -137,6 +138,35 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         return mapChunk;
     }
 
+    public void pauseSearch(Player player) {
+        PlayerSearch search = searches.get(player.getUUID());
+        if (search != null) {
+            searches.put(player.getUUID(), new PlayerSearch(search.level(), search.searchString(), search.searchTodo(), search.totalEntries, true));
+            Messages.sendToPlayer(new PacketPauseStateToClient(true), player);
+        }
+    }
+
+    public void unpauseSearch(Player player) {
+        PlayerSearch search = searches.get(player.getUUID());
+        if (search != null) {
+            searches.put(player.getUUID(), new PlayerSearch(search.level(), search.searchString(), search.searchTodo(), search.totalEntries, false));
+            Messages.sendToPlayer(new PacketPauseStateToClient(false), player);
+        }
+    }
+
+    public boolean isPaused(Player player) {
+        PlayerSearch search = searches.get(player.getUUID());
+        return search != null && search.paused();
+    }
+
+    public boolean isSearching(Player player) {
+        return searches.containsKey(player.getUUID());
+    }
+
+    public void stopSearch(Player player) {
+        searches.remove(player.getUUID());
+    }
+
     public void startSearch(Player player, String category) {
         if (category.isEmpty()) {
             searches.remove(player.getUUID());
@@ -144,7 +174,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         }
         Level level = player.level();
         EntryPos pos = EntryPos.fromChunkPos(level.dimension(), new ChunkPos(player.blockPosition()));
-        PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>(), (Config.SEARCH_RADIUS.get() * 2 + 1) * (Config.SEARCH_RADIUS.get() * 2 + 1));
+        PlayerSearch search = new PlayerSearch(level.dimension(), category, new LinkedHashSet<>(), (Config.SEARCH_RADIUS.get() * 2 + 1) * (Config.SEARCH_RADIUS.get() * 2 + 1), false);
         // Add all the chunks in a 10x10 square around the player starting from the player
         // position and going outwards
         for (int radius = 0; radius <= Config.SEARCH_RADIUS.get(); radius++) {
@@ -172,6 +202,9 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         Set<UUID> searchesToRemove = new HashSet<>();
         for (Map.Entry<UUID, PlayerSearch> entry : searches.entrySet()) {
             PlayerSearch search = entry.getValue();
+            if (search.paused()) {
+                continue; // Skip paused searches
+            }
             if (!search.searchTodo().isEmpty()) {
                 ServerLevel level = overworld.getServer().getLevel(search.level());
                 Set<ChunkPos> result = new HashSet<>();

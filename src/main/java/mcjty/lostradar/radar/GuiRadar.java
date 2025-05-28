@@ -81,7 +81,6 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                             Messages.sendToServer(new PacketStartSearch(category, entry.usage()));
                         }
                         ClientMapData.getData().setSearchString(category);
-                        ClientMapData.getData().clearSearchResults();
                     }
                 });
         Button clearButton = Widgets.button(238, ySize - 22, 133, 15, "Clear").event(() -> {
@@ -293,6 +292,8 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int progress = data.getSearchProgress();
         if (progress >= 100) {
             scanButton.text("Scan");
+        } else if (data.isPaused()) {
+            scanButton.text("Paused: " + progress + "%");
         } else {
             scanButton.text(progress + "%");
         }

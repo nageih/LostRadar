@@ -34,14 +34,24 @@ public record PacketStartSearch(String category, int usage) implements CustomPac
         ctx.workHandler().submitAsync(() -> {
             ctx.player().ifPresent(player -> {
                 ServerMapData mapData = ServerMapData.getData(player.level());
-                if (usage > 0) {
-                    int extracted = Registration.RADAR.get().extractEnergyNoMax(player.getMainHandItem(), usage, false);
-                    if (extracted < usage) {
-                        player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", usage));
-                        return;
+                if (category.isEmpty()) {
+                    mapData.stopSearch(player);
+                } else if (mapData.isSearching(player)) {
+                    if (mapData.isPaused(player)) {
+                        mapData.unpauseSearch(player);
+                    } else {
+                        mapData.pauseSearch(player);
                     }
+                } else {
+                    if (usage > 0) {
+                        int extracted = Registration.RADAR.get().extractEnergyNoMax(player.getMainHandItem(), usage, false);
+                        if (extracted < usage) {
+                            player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", usage));
+                            return;
+                        }
+                    }
+                    mapData.startSearch(player, category);
                 }
-                mapData.startSearch(player, category);
             });
         });
     }

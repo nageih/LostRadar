@@ -24,6 +24,7 @@ public class ClientMapData {
 
     private String searchString = "";
     private int searchProgress = 100;
+    private boolean paused = false;
 
     @Nonnull
     public static ClientMapData getData() {
@@ -40,12 +41,22 @@ public class ClientMapData {
         searchedChunks.clear();
         searchString = "";
         searchProgress = 100;
+        paused = false;
     }
 
     public void clearSearchResults() {
         searchResults.clear();
         searchedChunks.clear();
         searchProgress = 100;
+        paused = false;
+    }
+
+    public void setPauseState(boolean paused) {
+        this.paused = paused;
+    }
+
+    public boolean isPaused() {
+        return paused;
     }
 
     public void setSearchProgress(int progress) {
@@ -59,6 +70,7 @@ public class ClientMapData {
     public void addSearchResults(Set<ChunkPos> positions, Set<EntryPos> chunks) {
         searchResults.addAll(positions);
         searchedChunks.addAll(chunks);
+        paused = false;
     }
 
     public Set<ChunkPos> getSearchResults() {
@@ -118,5 +130,4 @@ public class ClientMapData {
             return palette.getPalette().palette().get(dataAt);
         }
     }
-
 }
