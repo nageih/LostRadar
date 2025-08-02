@@ -2,11 +2,11 @@ package mcjty.lostradar.network;
 
 import mcjty.lib.network.CustomPacketPayload;
 import mcjty.lib.network.PlayPayloadContext;
-import mcjty.lib.varia.ComponentFactory;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.ServerMapData;
 import mcjty.lostradar.setup.Registration;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public record PacketStartSearch(String category, int usage) implements CustomPacketPayload {
@@ -46,7 +46,7 @@ public record PacketStartSearch(String category, int usage) implements CustomPac
                     if (usage > 0) {
                         int extracted = Registration.RADAR.get().extractEnergyNoMax(player.getMainHandItem(), usage, false);
                         if (extracted < usage) {
-                            player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", usage));
+                            player.sendSystemMessage(Component.translatable("message.lostradar.notenoughenergy", usage));
                             return;
                         }
                     }

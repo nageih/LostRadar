@@ -17,8 +17,8 @@ public record MapPalette(List<PaletteEntry> palette) {
     public record PaletteEntry(String name, int color, String translatableKey, int usage, List<String> commands, int iconU, int iconV, Set<ResourceLocation> buildings) {
     }
 
-    public static final PaletteEntry CITY = new PaletteEntry("city", 0xAAAAAA, "lostradar.city", 0, Collections.emptyList(), -1, -1, Set.of());
-    public static final PaletteEntry HIGHWAY = new PaletteEntry("highway", 0x000000, "lostradar.highway", 0, Collections.emptyList(), -1, -1, Set.of());
+    public static final PaletteEntry CITY = new PaletteEntry("city", 0xAAAAAA, "map.lostradar.city", 0, Collections.emptyList(), -1, -1, Set.of());
+    public static final PaletteEntry HIGHWAY = new PaletteEntry("highway", 0x000000, "map.lostradar.highway", 0, Collections.emptyList(), -1, -1, Set.of());
 
     private static final Codec<PaletteEntry> PALETTE_ENTRY_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("name").forGetter(PaletteEntry::name),

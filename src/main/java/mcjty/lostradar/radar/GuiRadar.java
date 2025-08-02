@@ -6,7 +6,6 @@ import mcjty.lib.client.GuiTools;
 import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.*;
 import mcjty.lib.gui.widgets.*;
-import mcjty.lib.varia.ComponentFactory;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.*;
 import mcjty.lostradar.network.Messages;
@@ -17,7 +16,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import org.apache.commons.lang3.tuple.Pair;
@@ -63,7 +61,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
         Panel toplevel = positional().filledRectThickness(2);
         categoryList = Widgets.list(238, 12, 133, ySize - 53);
-        scanButton = Widgets.button(238, ySize - 40, 133, 15, "Scan")
+        scanButton = Widgets.button(238, ySize - 40, 133, 15, Component.translatable("gui.lostradar.radar.button.scan"))
                 .event(() -> {
                     int selected = categoryList.getSelected();
                     if (selected >= 0) {
@@ -73,7 +71,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         if (entry.usage() > 0) {
                             int extracted = Registration.RADAR.get().extractEnergyNoMax(Minecraft.getInstance().player.getMainHandItem(), entry.usage(), true);
                             if (extracted < entry.usage()) {
-                                Minecraft.getInstance().player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", entry.usage()));
+                                Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.lostradar.notenoughenergy", entry.usage()));
                                 return;
                             }
                         }
@@ -83,7 +81,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         ClientMapData.getData().setSearchString(category);
                     }
                 });
-        Button clearButton = Widgets.button(238, ySize - 22, 133, 15, "Clear").event(() -> {
+        Button clearButton = Widgets.button(238, ySize - 22, 133, 15, Component.translatable("gui.lostradar.radar.button.clear")).event(() -> {
             ClientMapData.getData().clearSearchResults();
             ClientMapData.getData().setSearchString("");
             Messages.sendToServer(new PacketStartSearch("", 0));
@@ -281,7 +279,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     }
 
     private Widget<Label> makeLine(MapPalette.PaletteEntry category) {
-        return Widgets.label(category.name());
+        return Widgets.label(Component.translatable(category.translatableKey()));
     }
 
     @Override
@@ -291,11 +289,11 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         scanButton.enabled(scanEnabled);
         int progress = data.getSearchProgress();
         if (progress >= 100) {
-            scanButton.text("Scan");
+            scanButton.message(Component.translatable("gui.lostradar.radar.button.scan"));
         } else if (data.isPaused()) {
-            scanButton.text("Paused: " + progress + "%");
+            scanButton.message(Component.translatable("gui.lostradar.radar.button.paused", progress));
         } else {
-            scanButton.text(progress + "%");
+            scanButton.message(Component.translatable("gui.lostradar.radar.button.progress", progress));
         }
         drawWindow(graphics);
         renderMap(graphics);
@@ -304,7 +302,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int energyStored = Registration.RADAR.get().getEnergyStored(Minecraft.getInstance().player.getMainHandItem());
         boolean hasEnergy = energyStored >= Config.RADAR_MINENERGY_FOR_MAP.get();
         if (!hasEnergy) {
-            graphics.drawString(Minecraft.getInstance().font, ComponentFactory.translatable("lostradar.energylow"), this.guiLeft + 12, this.guiTop + 12, 0xffff0000);
+            graphics.drawString(Minecraft.getInstance().font, Component.translatable("message.lostradar.energylow"), this.guiLeft + 12, this.guiTop + 12, 0xffff0000);
         }
     }
 
@@ -332,10 +330,8 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                 ChunkPos pos = pair.getValue();
                 // Check if mouseX and mouseY are within the rectangle
                 if (rect.contains(mouseX, mouseY)) {
-                    String posString = String.format("%d, %d", pos.getMiddleBlockX(), pos.getMiddleBlockZ());
-                    String distanceString = String.format("%d", Math.max(Math.abs(pos.x - p.x), Math.abs(pos.z - p.z)) * 16);
-                    List<Component> components = List.of(ComponentFactory.translatable("lostradar.chunk.pos", posString),
-                            ComponentFactory.translatable("lostradar.chunk.dist", distanceString));
+                    List<Component> components = List.of(Component.translatable("tooltip.lostradar.chunk.pos", pos.getMiddleBlockX(), pos.getMiddleBlockZ()),
+                            Component.translatable("tooltip.lostradar.chunk.dist", Math.max(Math.abs(pos.x - p.x), Math.abs(pos.z - p.z)) * 16));
                     graphics.renderTooltip(Minecraft.getInstance().font, components, Optional.empty(),
                             tooltipX, tooltipY);
                     break;
@@ -348,7 +344,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     p.z + (mouseY - borderTop) / MAPCELL_SIZE - MAP_DIM);
             MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
             if (entry != null) {
-                graphics.renderTooltip(Minecraft.getInstance().font, ComponentFactory.translatable(entry.translatableKey()), tooltipX, tooltipY);
+                graphics.renderTooltip(Minecraft.getInstance().font, Component.translatable(entry.translatableKey()), tooltipX, tooltipY);
             }
         }
     }

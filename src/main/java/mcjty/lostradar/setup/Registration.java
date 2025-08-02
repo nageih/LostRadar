@@ -25,8 +25,8 @@ public class Registration {
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
     public static RegistryObject<CreativeModeTab> TAB = TABS.register("lostradar", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup." + MODID))
-            .icon(() -> new ItemStack(Blocks.STONE_BRICKS))
+            .title(Component.translatable("itemGroup.lostradar.main"))
+            .icon(() -> new ItemStack(RADAR.get()))
             .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
             .displayItems((featureFlags, output) -> {
                 LostRadar.setup.populateTab(output);

@@ -1,14 +1,29 @@
 {
-  "lostradar.city": "City",
-  "lostradar.highway": "Highway",
-  "lostradar.buildings": "Building",
-  "lostradar.center": "City Center",
-  "lostradar.library": "Town library",
-  "lostradar.shopping": "Shopping center",
-  "lostradar.default": "Unknown building",
-  "lostradar.chunk.pos": "Coordinate %s",
-  "lostradar.chunk.dist": "Distance %s",
-  "lostradar.notenoughenergy": "Not enough energy to perform this search!",
-  "lostradar.energylow": "No energy!",
-  "item.lostradar.radar": "Radar"
+  "item.lostradar.radar": "Radar",
+  "itemGroup.lostradar.main": "Lost Radar",
+
+  "map.lostradar.city": "City",
+  "map.lostradar.highway": "Highway",
+
+  "gui.lostradar.radar.button.scan": "Scan",
+  "gui.lostradar.radar.button.clear": "Clear",
+  "gui.lostradar.radar.button.paused": "Paused: %s%%",
+  "gui.lostradar.radar.button.progress": "%s%%",
+
+  "message.lostradar.notenoughenergy": "Not enough energy! Requires %s",
+  "message.lostradar.energylow": "Energy low!",
+
+  "tooltip.lostradar.chunk.pos": "Pos: %s, %s",
+  "tooltip.lostradar.chunk.dist": "Dist: %s",
+
+  "config.lostradar.general.searchRadius.tooltip": "The radius of the search area for the radar. This is measured in multiples of 8 chunks",
+  "config.lostradar.general.radarMaxRF.tooltip": "Maximum RF storage that the radar item can hold",
+  "config.lostradar.general.radarRFPerTick.tooltip": "RF per tick that the the radar item can receive",
+  "config.lostradar.general.radarMinRFForMap.tooltip": "Minimum RF that the radar item must have to be able to show the map fully",
+  "config.lostradar.general.hilightR1.tooltip": "The red component of the hilight color one",
+  "config.lostradar.general.hilightG1.tooltip": "The green component of the hilight color one",
+  "config.lostradar.general.hilightB1.tooltip": "The blue component of the hilight color one",
+  "config.lostradar.general.hilightR2.tooltip": "The red component of the hilight color two",
+  "config.lostradar.general.hilightG2.tooltip": "The green component of the hilight color two",
+  "config.lostradar.general.hilightB2.tooltip": "The blue component of the hilight color two"
 }
